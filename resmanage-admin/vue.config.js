@@ -32,7 +32,7 @@ module.exports = {
     proxy: {
       '/admin': {
         target: 'http://localhost:8080'
-      },
+      }
     },
     port: port,
     open: true,

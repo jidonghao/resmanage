@@ -47,7 +47,7 @@
     </el-form>
 
     <div class="copyright">
-      Copyright © 2022 xxx.com 版权所有 <a href="https://github.com/linlinjava/litemall">沪ICP备xxx号</a>
+      <!--      Copyright © 2022 xxx.com 版权所有 <a href=""></a>-->
     </div>
   </div>
 </template>
@@ -67,8 +67,8 @@ export default {
     }
     return {
       loginForm: {
-        username: 'admin123',
-        password: 'admin123',
+        username: '',
+        password: '',
         code: ''
       },
       codeImg: '',
