@@ -1,3 +1,4 @@
+/** @type {import('vite').UserConfig} */
 import { defineConfig } from 'vite'
 import uni from '@dcloudio/vite-plugin-uni'
 import { resolve } from 'path'
@@ -11,15 +12,15 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
-  css: {
-    // css预处理器
-    preprocessorOptions: {
-      scss: {
-        // 因为uni.scss可以全局使用，这里根据自己的需求调整
-        additionalData: '@import "./src/styles/global.scss";'
-      }
-    }
-  },
+  // css: {
+  //   // css预处理器
+  //   preprocessorOptions: {
+  //     scss: {
+  //       // 因为uni.scss可以全局使用，这里根据自己的需求调整
+  //       additionalData: '@import "/src/styles/global.scss";'
+  //     }
+  //   }
+  // },
   // 开发服务器配置
   server: {
     host: '0.0.0.0',
@@ -44,7 +45,8 @@ export default defineConfig({
         entryFileNames: 'static/js/[name]-[hash].js',
         assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
       }
-    }
+    },
     /** 配置h5打包js,css,img分别在不同文件夹end */
+    target:['@dcloudio/uni-ui']
   }
 })
