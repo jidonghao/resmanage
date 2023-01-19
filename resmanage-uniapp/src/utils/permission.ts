@@ -21,8 +21,6 @@ export default async function() {
             invoke(e) {
                 // 获取要跳转的页面路径（url去掉"?"和"?"后的参数）
                 const url = e.url.split('?')[0]
-                console.log('url', url)
-
                 // 判断当前窗口是白名单，如果是则不重定向路由
                 let pass
                 if (whiteList) {

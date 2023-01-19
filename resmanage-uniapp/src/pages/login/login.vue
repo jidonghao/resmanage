@@ -25,7 +25,7 @@
         <uni-easyinput type="number" :maxlength="11" v-model="formData.phoneNumber" placeholder="请输入手机号"/>
       </uni-forms-item>
       <uni-forms-item required name="passwd" label="密码：">
-        <uni-easyinput type="text" :maxlength="6" v-model="formData.passwd" placeholder="请输入密码"/>
+        <uni-easyinput type="password" v-model="formData.passwd" placeholder="请输入密码"/>
       </uni-forms-item>
     </uni-forms>
   </view>
@@ -34,6 +34,8 @@
 
 <script setup lang="ts">
 import {ref, unref} from 'vue'
+import loginApi from '@/api/login'
+import {setAuthorization} from "@/utils/auth";
 
 let formData = ref({phoneNumber: '', captcha: '', passwd: ''})
 let useSelect = ref(1)
@@ -55,24 +57,27 @@ let verification = (phone = false, captcha = false, passwd = false) => {
       return false
     }
   }
-
   if (captcha) {
     if (!formData.value.captcha) {
       uni.showToast({title: '请输入验证码', icon: 'error'})
+      return false
     } else if (formData.value.captcha.length !== 6) {
       uni.showToast({title: '验证码错误', icon: 'error'})
+      return false
     }
   }
 
   if (passwd) {
     if (!formData.value.passwd) {
       uni.showToast({title: '请输入密码', icon: 'error'})
+      return false
     } else if (formData.value.passwd.length < 8) {
       uni.showToast({title: '用户名或密码错误', icon: 'error'})
+      return false
     }
   }
 
-
+  return true
 }
 /**
  * 获取验证码
@@ -98,9 +103,24 @@ let getCaptcha = () => {
  * 登录
  */
 let login = () => {
-  if(!verification(true,useSelect.value===1,useSelect.value===2))
+  if (!verification(true, useSelect.value === 1, useSelect.value === 2)) {
     return false
+  }
 
+  switch (useSelect.value) {
+    case 1:
+      uni.showToast({title: '短信权限正在申请...', icon: 'error'})
+      break
+    case 2:
+      loginApi.login({type: useSelect.value, ...unref(formData)}).then((res: any) => {
+        setAuthorization(res.token)
+        uni.reLaunch({url: "/pages/index/index"})
+      }).catch((err: any) => {
+        uni.showModal({content: err.errMsg || "手机号或密码错误", showCancel: false})
+      })
+
+      break
+  }
 }
 
 </script>

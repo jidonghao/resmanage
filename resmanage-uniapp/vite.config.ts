@@ -36,7 +36,8 @@ export default defineConfig({
   },
   build: {
     // 禁用 gzip 压缩大小报告，以提升构建性能
-    // brotliSize: false,
+    // @ts-ignore
+    brotliSize: false,
     /** 配置h5打包js,css,img分别在不同文件夹start */
     assetsDir: 'static/img/',
     rollupOptions: {
@@ -47,6 +48,6 @@ export default defineConfig({
       }
     },
     /** 配置h5打包js,css,img分别在不同文件夹end */
-    target:['@dcloudio/uni-ui']
+    transpileDependencies:['@dcloudio/uni-ui']
   }
 })
