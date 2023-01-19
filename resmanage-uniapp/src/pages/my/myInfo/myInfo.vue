@@ -5,7 +5,7 @@
     </arrow-list>
     <arrow-list title="昵称" showLine :value="nickName"/>
     <arrow-list title="手机号" :value="phoneNumber"/>
-    <arrow-list title="密码" :value="'未设置'"/>
+    <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
     <view class="logout" @click="logout">退出登录</view>
   </view>
 </template>
@@ -18,13 +18,15 @@ import {removeAuthorization} from "@/utils/auth";
 
 let nickName = ref(''),
     phoneNumber = ref(''),
-    avatar = ref('')
+    avatar = ref(''),
+    hasPasswd = ref(false)
 
 onLoad(() => {
   let userInfo = uni.getStorageSync("userInfo")
   nickName.value = userInfo.nickName
   phoneNumber.value = userInfo.phoneNumber
   avatar.value = userInfo.avatar
+  hasPasswd.value = userInfo.hasPasswd
 });
 
 /**
