@@ -6,7 +6,7 @@ import { getAuthorization } from '@/utils/auth'
 
 // 白名单
 const whiteList = [
-    '/', // 注意入口页必须直接写 '/'
+   '/', // 注意入口页必须直接写 '/'
     // { pattern: /^\/pages\/list.*/ }, // 支持正则表达式
     // '/pages/grid/grid',
     // '/pages/user-center/user-center',

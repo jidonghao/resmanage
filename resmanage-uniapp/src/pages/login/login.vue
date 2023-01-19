@@ -29,7 +29,7 @@
       </uni-forms-item>
     </uni-forms>
   </view>
-  <button @click="login" class="login" type="primary">登录</button>
+  <button @click="login" class="login">登录</button>
 </template>
 
 <script setup lang="ts">
@@ -95,7 +95,7 @@ let getCaptcha = () => {
         if (time === 0) {
           clearInterval(captchaTime)
           captchaDis.value = false
-          captchaPlaceHolder.value = "请输入验证码"
+          captchaPlaceHolder.value = "重新获取"
         }
       }, 1e3)
 }
@@ -114,7 +114,8 @@ let login = () => {
     case 2:
       loginApi.login({type: useSelect.value, ...unref(formData)}).then((res: any) => {
         setAuthorization(res.token)
-        uni.reLaunch({url: "/pages/index/index"})
+        uni.setStorageSync('userInfo',res.info)
+        uni.reLaunch({url: "/pages/recent/recent"})
       }).catch((err: any) => {
         uni.showModal({content: err.errMsg || "手机号或密码错误", showCancel: false})
       })
@@ -162,5 +163,7 @@ let login = () => {
 
 .login {
   margin: 0 30upx;
+  background: #007aff;
+  color: white;
 }
 </style>

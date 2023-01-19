@@ -9,9 +9,31 @@
       }
     },
     {
+      "path": "pages/recent/recent",
+      "style": {
+        "navigationBarTitleText": "最近项目",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "uni-app"
+        "navigationBarTitleText": "浏览"
+      }
+    },
+    {
+      "path": "pages/my/my",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#fff",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/my/myInfo/myInfo",
+      "style": {
+        "navigationBarTitleText": "账号与安全",
+        "enablePullDownRefresh": false
       }
     }
   ],
@@ -24,8 +46,34 @@
   },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "uni-app",
+    "navigationBarTitleText": "资源管理",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "borderStyle": "black",
+    "backgroundColor": "#F7F7F7",
+    "color": "#000000",
+    "selectedColor": "#1296db",
+    "list": [
+      {
+        "iconPath": "static/icon/recent.png",
+        "selectedIconPath": "static/icon/recent-select.png",
+        "text": "最近项目",
+        "pagePath": "pages/recent/recent"
+      },
+      {
+        "iconPath": "static/icon/file-folder-close.png",
+        "selectedIconPath": "static/icon/file-folder-open.png",
+        "text": "浏览",
+        "pagePath": "pages/index/index"
+      },
+      {
+        "iconPath": "static/icon/my.png",
+        "selectedIconPath": "static/icon/my-fill.png",
+        "text": "我的",
+        "pagePath": "pages/my/my"
+      }
+    ]
   }
 }

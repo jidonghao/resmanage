@@ -11,6 +11,6 @@ export function setAuthorization(authorization:any) {
     return uni.setStorageSync(authorizationKey, authorization)
 }
 
-export function removeAuthorization(authorization:any) {
+export function removeAuthorization() {
     return uni.removeStorageSync(authorizationKey)
 }
