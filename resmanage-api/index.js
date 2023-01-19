@@ -4,6 +4,7 @@ import tools from "./tools/tools.js";
 import multer from 'multer'
 import fs from 'fs'
 import expressJwt from 'express-jwt'
+import login from './api/login.js'
 const app = express()
 import bodyParser from 'body-parser'
 import {verToken,setToken} from "./public/token.js";
@@ -57,16 +58,25 @@ app.get("/", (request, response) => {
 })
 
 app.post('/login', (req, res, next) =>{
-    let {username, password} = req.body;
-    console.log(req.body)
-    if(!username&&!password){
+    let {phoneNumber, passwd} = req.body;
+    if(!phoneNumber&&!passwd){
         res.json(resJson(601,'参数不对'))
-    }else if(username.length<6||username.length>20||password.length<6||password.length>20){
-        res.json(resJson(600,'账号密码错误'))
+    }else if(phoneNumber.length!==11||passwd.length<6||passwd.length>20){
+        res.json(resJson(600,'手机号或密码错误'))
     }else{
-        //生成token
-        setToken(username,password).then((data)=>{
-            res.json(resJson(0,'登录成功', {token:data}));
+        login.loginByPasswd(phoneNumber,passwd).then(data=>{
+            if(passwd === data[0]?.passwd&&phoneNumber === data[0]?.phone_number){
+                setToken(phoneNumber,passwd).then((data)=>{
+                    res.json(resJson(0,'登录成功', {
+                        token:data,
+                        params:['./*','*','&^%$']
+                    }));
+                })
+            }else{
+                res.json(resJson(600,'手机号或密码错误'))
+            }
+        }).catch(err=>{
+            console.log(err)
         })
     }
 });

@@ -23,3 +23,5 @@ selenium-debug.log
 package-lock.json
 yarn.lock
 /shareDist/
+/sql/sql-setting.js
+/sms/sms-setting.js
