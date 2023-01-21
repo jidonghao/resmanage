@@ -20,13 +20,12 @@ export const request = ( url: string, method: 'POST' | 'GET', data: Object) => {
                             reject(res.data)
                             break
                     }
-
                 }else{
                     resolve(res.data)
                 }
             },
             fail: (err:any) => {
-                reject(err)
+                reject({errMsg:'网络错误，请稍后再试'})
             }
         })
     })
