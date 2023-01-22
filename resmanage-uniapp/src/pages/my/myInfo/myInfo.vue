@@ -11,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+import arrowList from "/components/arrow-list/arrow-list.vue"
 import {ref} from 'vue'
 import {onLoad} from "@dcloudio/uni-app";
 import {showModal} from "@/utils/utils";

@@ -13,7 +13,7 @@
       <uni-forms-item required name="captcha" label="验证码：">
         <view class="getCaptcha">
           <uni-easyinput type="number" :maxlength="6" v-model="formData.captcha" placeholder="请输入验证码"/>
-          <button :disabled="captchaDis" @click="getCaptcha">{{ captchaPlaceHolder }}</button>
+          <button class="getCaptchaBtn" :disabled="captchaDis" @click="getCaptcha">{{ captchaPlaceHolder }}</button>
         </view>
       </uni-forms-item>
     </uni-forms>
@@ -39,7 +39,7 @@ import {setAuthorization} from "@/utils/auth";
 
 let formData = ref({phoneNumber: '', captcha: '', passwd: ''})
 let useSelect = ref(1)
-let captchaPlaceHolder = ref("请输入验证码")  // 验证码按钮
+let captchaPlaceHolder = ref("获取验证码")  // 验证码按钮
 let captchaDis = ref(false)
 /**
  * 表单验证
@@ -112,12 +112,15 @@ let login = () => {
       uni.showToast({title: '短信权限正在申请...', icon: 'error'})
       break
     case 2:
+      uni.showLoading({title:"请稍后",mask:true})
       loginApi.login({type: useSelect.value, ...unref(formData)}).then((res: any) => {
         setAuthorization(res.token)
         uni.setStorageSync('userInfo',res.info)
         uni.reLaunch({url: "/pages/recent/recent"})
       }).catch((err: any) => {
         uni.showModal({content: err.errMsg || "手机号或密码错误", showCancel: false})
+      }).finally(()=>{
+        uni.hideLoading()
       })
 
       break
@@ -136,8 +139,9 @@ let login = () => {
   justify-content: center;
   align-items: center;
 
-  > button {
-    font-size: 28upx;
+  .getCaptchaBtn {
+    font-size: 24upx;
+    padding: 2upx 16upx;
     margin-left: 18upx;
   }
 }

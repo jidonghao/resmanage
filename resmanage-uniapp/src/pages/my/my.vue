@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import arrowList from "/components/arrow-list/arrow-list.vue"
 import {ref} from 'vue'
 import {removeAuthorization} from "@/utils/auth";
 import {showModal} from "@/utils/utils";
