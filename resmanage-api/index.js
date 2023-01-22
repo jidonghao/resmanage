@@ -10,6 +10,7 @@ import {signKey} from './public/token.js'
 const app = express()
 import bodyParser from 'body-parser'
 import {verToken, setToken} from "./public/token.js";
+import file from "./api/file.js";
 
 let resJson = (errNo, errMsg, data) => ({...data, errMsg, errNo})
 
@@ -78,8 +79,8 @@ app.post('/login', (req, res, next) => {
                             phoneNumber: sqlBack?.phone_number,
                             nickName: sqlBack?.nick_name,
                             identity: sqlBack?.identity,
-                            avatar:sqlBack?.avatar,
-                            hasPasswd:!!sqlBack?.passwd
+                            avatar: sqlBack?.avatar,
+                            hasPasswd: !!sqlBack?.passwd
                         }
                     }));
                 })
@@ -92,9 +93,53 @@ app.post('/login', (req, res, next) => {
         })
     }
 });
+
+/* 文件夹相关  begin 👇 */
 /**
- * 登出
+ * 新增文件夹
  */
+app.post('/file/addFolder', (req, res, next) => {
+    let {folderName = ""} = req.body,
+        {id = ""} = req.data
+    if (!folderName || !id) {
+        res.json(resJson(-2, '失败，参数错误'))
+    } else {
+        file.addFolder(id, folderName).then(data => {
+            res.json(resJson(0, '成功', {id: data.insertId}))
+        }).catch(err => {
+            console.error("addFolder:", err)
+            res.json(resJson(500, '系统内部错误'))
+        })
+    }
+})
+/**
+ * 查询
+ * id,page,limit,folderId,fileName
+ */
+app.get('/file/query', (req, res, next) => {
+    let {id = ''} = req.data
+    let {page, limit, folderId=null,fileName=''} = req.query
+    page = parseInt(page)
+    limit = parseInt(limit)
+    page = page ? page : 1
+    limit = limit ? limit : 20
+    folderId = folderId ?? -1
+    if (id) {
+        file.getFileList(id, page, limit, folderId,fileName).then(data => {
+            res.json(resJson(0, '成功', data))
+        }).catch(err => {
+            console.error("getFolder:", err)
+            res.json(resJson(500, '系统内部错误'))
+        })
+    } else {
+        res.json(resJson(-1, '失败，没有找到指定用户'))
+    }
+})
+
+
+/* 文件夹相关  end   👆 */
+
+
 // 获取时间
 app.get('/getTime', (req, res, next) => {
     res.json(resJson(0, '成功', {time: new Date().getTime()}))
