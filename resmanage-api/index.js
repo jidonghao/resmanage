@@ -47,7 +47,7 @@ app.use(expressJwt({secret: signKey, algorithms: ['HS256']}).unless({
 }));
 //当token失效返回提示信息
 app.use(function (err, req, res, next) {
-    console.log(err)
+    // console.log(err)
     if (err.status === 401) {
         return res.status(501).json(resJson(501, '请先登录'));
     }

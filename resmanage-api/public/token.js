@@ -8,7 +8,7 @@ export let setToken = (phoneNumber, id) => {
     return new Promise((resolve, reject) => {
         const token = 'Bearer ' + jwt.sign({
             phoneNumber, id
-        }, signKey, {expiresIn: '1h'});
+        }, signKey, {expiresIn: '7d'});
         resolve(token);
     })
 }
