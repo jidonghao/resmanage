@@ -7,7 +7,7 @@
   "author": "jidonghao <ji534@outlook.com>",
   "scripts": {
     "start": "nodemon ./index.js",
-    "getDoc": "apiDoc -i ./ -o apiDoc/"
+    "getDoc": "apiDoc -i ./routes/ -o apiDoc/"
   },
   "dependencies": {
     "body-parser": "^1.20.0",
