@@ -25,3 +25,4 @@ yarn.lock
 /shareDist/
 /sql/sql-setting.js
 /sms/sms-setting.js
+/apiDoc/

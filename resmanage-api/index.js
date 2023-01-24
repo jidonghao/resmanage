@@ -1,21 +1,26 @@
 import express from 'express'
-import sql from './sql/sql.js'
-import tools from "./tools/tools.js";
-import multer from 'multer'
-import fs from 'fs'
+// import sql from './sql/sql.js'
+// import tools from "./tools/tools.js";
+// import multer from 'multer'
+// import fs from 'fs'
 import expressJwt from 'express-jwt'
-import login from './api/login.js'
-import {signKey} from './public/token.js'
-
-const app = express()
+import login from './sql/query/login.js'
+import {signKey} from './tools/token.js'
 import bodyParser from 'body-parser'
-import {verToken, setToken} from "./public/token.js";
-import file from "./api/file.js";
+import {verToken, setToken} from "./tools/token.js";
+import file from "./sql/query/file.js";
 
-let resJson = (errNo, errMsg, data) => ({...data, errMsg, errNo})
-
+export const resJson = (errNo, errMsg, data) => ({...data, errMsg, errNo})
+export const app = express()
+import path from "path"
+import {fileURLToPath} from 'url'
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
+app.use("/apiDoc", express.static(path.join(__dirname + '/apiDoc')))   // api文档
+
+
 // 允许跨域
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
@@ -43,7 +48,7 @@ app.use((req, res, next) => {
 });
 //验证token是否过期并规定哪些路由不用验证
 app.use(expressJwt({secret: signKey, algorithms: ['HS256']}).unless({
-    path: ['/login']//除了这个地址，其他的URL都需要验证
+    path: ['/', '/login', '/apiDoc', '/apidoc']//除了这个地址，其他的URL都需要验证
 }));
 //当token失效返回提示信息
 app.use(function (err, req, res, next) {
@@ -52,14 +57,23 @@ app.use(function (err, req, res, next) {
         return res.status(501).json(resJson(501, '请先登录'));
     }
 });
-
-
-app.get("/", (request, response) => {
-    response.json({errMsg: `请先登录`})
-})
-
 /**
- * 登录
+ *
+ * @query {post} /login 登录
+ * @apiName 登录
+ * @apiGroup /
+ * @apiDescription 登录
+ * @apiVersion  1.0.0
+ *
+ * @apiParam {String} id=''
+ *
+ * @apiParamExample  {type} Request-Example:
+ * {
+ *     id: 1
+ * }
+ *
+ * @apiSuccess {Number} code 200
+ * @apiSuccess {Object} data 用户信息
  */
 app.post('/login', (req, res, next) => {
     let {phoneNumber, passwd} = req.body;
@@ -94,6 +108,14 @@ app.post('/login', (req, res, next) => {
     }
 });
 
+
+app.get("/", (request, response) => {
+    console.log(11)
+    response.json(1)
+})
+
+
+
 /* 文件夹相关  begin 👇 */
 /**
  * 新增文件夹
@@ -118,14 +140,14 @@ app.post('/file/addFolder', (req, res, next) => {
  */
 app.get('/file/query', (req, res, next) => {
     let {id = ''} = req.data
-    let {page, limit, folderId=null,fileName=''} = req.query
+    let {page, limit, folderId = null, fileName = ''} = req.query
     page = parseInt(page)
     limit = parseInt(limit)
     page = page ? page : 1
     limit = limit ? limit : 20
     folderId = folderId ?? -1
     if (id) {
-        file.getFileList(id, page, limit, folderId,fileName).then(data => {
+        file.getFileList(id, page, limit, folderId, fileName).then(data => {
             res.json(resJson(0, '成功', data))
         }).catch(err => {
             console.error("getFolder:", err)
@@ -145,6 +167,12 @@ app.get('/getTime', (req, res, next) => {
     res.json(resJson(0, '成功', {time: new Date().getTime()}))
 })
 
+app.use('*', (req, res) => {
+    res.status(404).json({
+        code: 404,
+        message: '404'
+    });
+});
 app.listen(8080, () => {
     console.log("服务已经启动，8080端口监听中...")
 })

@@ -1,5 +1,5 @@
-import sql from '../sql/sql.js'
-import tools from "../tools/tools.js";
+import sql from '../sql.js'
+import tools from "../../tools/tools.js";
 
 let file = {
     /**
