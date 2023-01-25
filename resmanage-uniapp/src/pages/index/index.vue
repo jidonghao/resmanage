@@ -16,9 +16,10 @@
     </view>
   </view>
 
-  <view class="container" @click="closeMenu" :style="`padding-top:${statusBar.navHeight}px `">
+  <view class="container" @click="closeMenu" :style="`padding-top:${statusBar.navHeight}px`">
     <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"
             @click="clickFile(item)"/>
+<!--    <view class="pH"/>-->
   </view>
 </template>
 
@@ -56,7 +57,7 @@ onReady(() => {
 // 点击文件
 let clickFile = (item: any) => {
   if (item.isNew) return false
-  switch (item.type){
+  switch (item.type) {
     case 1: // 文件夹
       break
     case 2: // img
@@ -77,7 +78,6 @@ const topMenuOptions = ref([
   {label: "新建文件夹", value: 1},
   {label: "上传文件", value: 2, hideBorder: true}
 ])
-
 
 let closeMenu = () => {
       if (showMenu.value) {
@@ -111,12 +111,18 @@ let closeMenu = () => {
 <style scoped lang="scss">
 .container {
   background: #fefefe;
-  height: 100vh;
+  height: 100%;
   width: 100vw;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
+  overflow: scroll;
+  overflow-x: hidden;
+
+  .container_scroll__view {
+    height: 200upx;
+  }
 }
 
 .nav-style {

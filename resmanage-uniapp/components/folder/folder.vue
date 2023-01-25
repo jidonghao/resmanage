@@ -38,6 +38,7 @@ let showMenu = (e) => {
   width: 170upx;
   text-align: center;
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: flex-start;
   flex-direction: column;
@@ -86,8 +87,8 @@ let showMenu = (e) => {
     width: 180upx;
     padding: 6upx 12upx;
     position: absolute;
-    top: 220upx;
     z-index: 9;
+    top: 140upx;
     background: rgba(240, 240, 240, 0.9);
     border-radius: 12upx;
   }
