@@ -2,6 +2,8 @@ import express from "express";
 import login from "../sql/query/login.js";
 import {setToken} from "../tools/token.js";
 import {resJson} from "../index.js";
+import {smsSend} from "../sms/sms.js";
+
 const router = express.Router();
 
 /**
@@ -68,4 +70,32 @@ router.post('/login', (req, res, next) => {
         })
     }
 });
+
+const getCode = () => {
+    return Array.from(
+        {length: 4},
+        () => Math.floor(Math.random() * 10)
+    ).join('')
+}
+
+router.post('/getCode', (req, res, next) => {
+    let {phoneNumber} = req.body;
+    if (!phoneNumber) {
+        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+    if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
+        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+
+    
+
+    // smsSend(phoneNumber, getCode()).then(res => {
+    //     res.json(resJson(0, '成功'))
+    // }).catch(err => {
+    //     res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+    // })
+})
+
 export default router
