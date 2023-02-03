@@ -6,6 +6,7 @@ import {verToken} from "./tools/token.js";
 import path from "path"
 import {fileURLToPath} from 'url'
 import router from "./routes/index.js"
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const resJson = (errNo, errMsg, data) => ({...data, errMsg, errNo})
@@ -42,7 +43,7 @@ app.use((req, res, next) => {
 });
 //验证token是否过期并规定哪些路由不用验证
 app.use(expressJwt({secret: signKey, algorithms: ['HS256']}).unless({
-    path: ['/', '/api/user/login', '/apidoc']//除了这个地址，其他的URL都需要验证
+    path: ['/', '/api/user/login', '/api/user/getCode', '/apidoc']//除了这个地址，其他的URL都需要验证
 }));
 
 //当token失效返回提示信息
@@ -52,14 +53,14 @@ app.use(function (err, req, res, next) {
     }
 });
 
-app.use("/api",router)
+app.use("/api", router)
 
 app.get("/", (request, response) => {
     response.json(1)
 })
 
-app.use("*",(req, res, next) => {
-    res.status(404).json(resJson(404,"接口不存在",{path:req._parsedUrl.path}))
+app.use("*", (req, res, next) => {
+    res.status(404).json(resJson(404, "接口不存在", {path: req._parsedUrl.path}))
 })
 app.listen(8080, () => {
     console.log("服务已经启动，8080端口监听中...")

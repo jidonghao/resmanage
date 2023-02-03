@@ -23,12 +23,7 @@ export const smsSend = (phoneNumber, code) => new Promise((resolve, reject) => {
         method: 'POST',
         formatParams: false,
     }).then((result) => {
-        result = JSON.stringify(result)
-        if (result?.Message === "OK") {
-            resolve(result)
-        } else {
-            reject(result)
-        }
+        resolve(JSON.stringify(result))
     }).catch(err => {
         reject(err)
     })

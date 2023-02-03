@@ -3,6 +3,7 @@ import login from "../sql/query/login.js";
 import {setToken} from "../tools/token.js";
 import {resJson} from "../index.js";
 import {smsSend} from "../sms/sms.js";
+import {getKey, setKey} from "../redis/index.js";
 
 const router = express.Router();
 
@@ -77,11 +78,30 @@ const getCode = () => {
         () => Math.floor(Math.random() * 10)
     ).join('')
 }
-
+/**
+ * @api {POST} /api/user/getCode 获取登录验证码
+ * @apiGroup user
+ * @apiDescription 用于获取登录验证码
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {String} phoneNumber 手机号
+ * @apiParamExample {json} request-example
+ * {
+ *  "phoneNumber": "13212345678",
+ * }
+ *
+ * @apiSuccess {String} errMsg 错误信息
+ * @apiSuccess {String} errNo 602:拦截 0:成功
+ * @apiSuccessExample  {json} success-example
+ * {
+ *   "errMsg": "成功"
+ *   "errNo": 0
+ * }
+ */
 router.post('/getCode', (req, res, next) => {
     let {phoneNumber} = req.body;
     if (!phoneNumber) {
-        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
         return false
     }
     if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
@@ -89,13 +109,38 @@ router.post('/getCode', (req, res, next) => {
         return false
     }
 
-    
+    getKey(phoneNumber).then(value => {
+        if (value) {
+            res.json(resJson(603, '系统检测到异常行为，已被拦截。'))
+            return Promise.reject("系统中存在对应验证码，属重复请求，已拒绝")
+        } else {
+            return Promise.resolve()
+        }
+    }).then(() => {
+        let code = getCode()
+        /*  //测试代码
+            setKey(phoneNumber, code).then(() => {
+                res.json(resJson(0, '成功'))
+            }).catch(err => {
+                console.error("发送验证码错误：", err)
+                res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
+            })
+         */
+        /**
+         * 调用发送短信
+         */
+        smsSend(phoneNumber, code).then(() => {
+            return setKey(phoneNumber, code)
+        }).then(() => {
+            res.json(resJson(0, '成功'))
+        }).catch(err => {
+            console.error("发送验证码错误：", err)
+            res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
+        })
+    }).catch(err => {
+        console.error("redis ERROR：", err)
+    })
 
-    // smsSend(phoneNumber, getCode()).then(res => {
-    //     res.json(resJson(0, '成功'))
-    // }).catch(err => {
-    //     res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
-    // })
 })
 
 export default router

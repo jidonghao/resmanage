@@ -7,8 +7,7 @@
   "author": "jidonghao <ji534@outlook.com>",
   "scripts": {
     "start": "nodemon ./index.js",
-    "getDoc": "apiDoc -i ./routes/ -o apiDoc/",
-    "pkg": "pkg index.js"
+    "getDoc": "apiDoc -i ./routes/ -o apiDoc/"
   },
   "dependencies": {
     "@alicloud/pop-core": "^1.7.12",
