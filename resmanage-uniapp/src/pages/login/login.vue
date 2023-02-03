@@ -86,6 +86,8 @@ let getCaptcha = () => {
   if (!verification(true))
     return false
   // 获取验证码
+
+
   uni.showToast({title: '成功发送', icon: 'success'})
   captchaDis.value = true
   captchaPlaceHolder.value = `60秒重新获取`
