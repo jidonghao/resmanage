@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import file from "@/api/file";
-import folder from "/components/folder/folder.vue"
+// import forder from "../../components/folder/folder.vue"
 import {ref, unref} from 'vue'
 import {onLoad, onReady} from "@dcloudio/uni-app";
 

@@ -87,6 +87,7 @@ let getCaptcha = () => {
     return false
   // 获取验证码
 
+  loginApi.getCode({})
 
   uni.showToast({title: '成功发送', icon: 'success'})
   captchaDis.value = true
