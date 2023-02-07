@@ -2,8 +2,8 @@
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import routingIntercept from '@/utils/permission'
 onLaunch(() => {
-  console.log("App Launch");
   routingIntercept()
+  console.log("App Launch");
 });
 onShow(() => {
   console.log("App Show");

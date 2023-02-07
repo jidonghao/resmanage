@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 });
 //验证token是否过期并规定哪些路由不用验证
 app.use(expressJwt({secret: signKey, algorithms: ['HS256']}).unless({
-    path: ['/', '/api/user/login', '/api/user/getCode', '/apidoc']//除了这个地址，其他的URL都需要验证
+    path: ['/', '/api/user/login', '/api/user/getCode','/api/user/loginByCode', '/apidoc']//除了这个地址，其他的URL都需要验证
 }));
 
 //当token失效返回提示信息

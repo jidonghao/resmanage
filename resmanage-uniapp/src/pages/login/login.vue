@@ -61,7 +61,7 @@ let verification = (phone = false, captcha = false, passwd = false) => {
     if (!formData.value.captcha) {
       uni.showToast({title: '请输入验证码', icon: 'error'})
       return false
-    } else if (formData.value.captcha.length !== 6) {
+    } else if (formData.value.captcha.length !== 4) {
       uni.showToast({title: '验证码错误', icon: 'error'})
       return false
     }
@@ -87,20 +87,29 @@ let getCaptcha = () => {
     return false
   // 获取验证码
 
-  loginApi.getCode({})
+  let captchaTimeStorage = +uni.getStorageSync('captchaTime') || null
+  if (captchaTimeStorage && new Date().getTime() - captchaTimeStorage < 300000) {
+    uni.showModal({title: "错误", content: "非法操作，已拦截", showCancel: false})
+  }
+  loginApi.getCode({phoneNumber: formData.value.phoneNumber}).then(() => {
+    uni.showToast({title: '成功发送', icon: 'success'})
+    captchaDis.value = true
+    captchaPlaceHolder.value = `60秒重新获取`
 
-  uni.showToast({title: '成功发送', icon: 'success'})
-  captchaDis.value = true
-  captchaPlaceHolder.value = `60秒重新获取`
-  let time = 59,
-      captchaTime = setInterval(() => {
-        captchaPlaceHolder.value = `${time--}秒重新获取`
-        if (time === 0) {
-          clearInterval(captchaTime)
-          captchaDis.value = false
-          captchaPlaceHolder.value = "重新获取"
-        }
-      }, 1e3)
+    uni.setStorageSync('captchaTime', new Date().getTime())
+
+    let time = 59,
+        captchaTime = setInterval(() => {
+          captchaPlaceHolder.value = `${time--}秒重新获取`
+          if (time === 0) {
+            clearInterval(captchaTime)
+            captchaDis.value = false
+            captchaPlaceHolder.value = "重新获取"
+          }
+        }, 1e3)
+  }).catch((err: any) => {
+    uni.showModal({title: "提示", content: err.errMsg || '操作失败，请重试', showCancel: false})
+  })
 }
 /**
  * 登录
@@ -112,17 +121,23 @@ let login = () => {
 
   switch (useSelect.value) {
     case 1:
-      uni.showToast({title: '短信权限正在申请...', icon: 'error'})
+      loginApi.loginByCode({phoneNumber:formData.value.phoneNumber,code:formData.value.captcha}).then((res:any)=>{
+        setAuthorization(res.token)
+        uni.setStorageSync('userInfo', res.info)
+        uni.reLaunch({url: "/pages/recent/recent"})
+      }).catch((err:any)=>{
+        uni.showModal({content: err.errMsg || "操作失败", showCancel: false})
+      })
       break
     case 2:
-      uni.showLoading({title:"请稍后",mask:true})
+      uni.showLoading({title: "请稍后", mask: true})
       loginApi.login({type: useSelect.value, ...unref(formData)}).then((res: any) => {
         setAuthorization(res.token)
-        uni.setStorageSync('userInfo',res.info)
+        uni.setStorageSync('userInfo', res.info)
         uni.reLaunch({url: "/pages/recent/recent"})
       }).catch((err: any) => {
         uni.showModal({content: err.errMsg || "手机号或密码错误", showCancel: false})
-      }).finally(()=>{
+      }).finally(() => {
         uni.hideLoading()
       })
 

@@ -46,7 +46,7 @@ router.post('/login', (req, res, next) => {
     } else if (phoneNumber.length !== 11 || passwd.length < 6 || passwd.length > 20) {
         res.json(resJson(600, '手机号或密码错误'))
     } else {
-        login.loginByPasswd(phoneNumber, passwd).then(data => {
+        login.queryByPhoneNumber(phoneNumber, passwd).then(data => {
             let sqlBack = data[0]
             if (passwd === sqlBack?.passwd && phoneNumber === sqlBack?.phone_number) {
                 setToken(sqlBack?.phone_number, sqlBack?.id).then((data) => {
@@ -71,6 +71,61 @@ router.post('/login', (req, res, next) => {
         })
     }
 });
+
+router.post('/loginByCode', (req, res, next) => {
+    let {phoneNumber, code} = req.body,userName=""
+    getKey(phoneNumber).then(value => {
+        if (code === value) {
+            return Promise.resolve()
+        } else {
+            res.json(resJson(601, '验证码错误'))
+            return Promise.reject("验证码错误")
+        }
+    }).then(() => {
+        return login.queryByPhoneNumber(phoneNumber).then(data => {
+            let sqlBack = data[0]
+            if (sqlBack) {
+                setToken(sqlBack?.phone_number, sqlBack?.id).then((data) => {
+                    res.json(resJson(0, '登录成功', {
+                        token: data,
+                        params: ['./*', '*', '&^%$'],
+                        info: {
+                            phoneNumber: sqlBack?.phone_number,
+                            nickName: sqlBack?.nick_name,
+                            identity: sqlBack?.identity,
+                            avatar: sqlBack?.avatar,
+                            hasPasswd: !!sqlBack?.passwd
+                        }
+                    }));
+                })
+            } else {
+                return Promise.resolve(1)   // 无该用户 去创建
+            }
+        }).catch(err => {
+            console.error("通过验证码登录sql错误：", err)
+        })
+    }).then(res => {
+        userName = `用户_${Math.floor(Math.random()*100000000)}`
+        return login.createUser(phoneNumber,userName)
+    }).then(data=>{
+        setToken(phoneNumber, data.insertId).then((data) => {
+            res.json(resJson(0, '登录成功', {
+                token: data,
+                params: ['./*', '*', '&^%$'],
+                info: {
+                    phoneNumber,
+                    nickName: userName,
+                    identity: 1,
+                    avatar: "https://oss.dhxt.fun/avatar_rabbit.png",
+                    hasPasswd: false
+                }
+            }));
+        })
+    }).catch(err => {
+        console.error("通过验证码登录错误：", err)
+        res.json(resJson(500, '系统内部错误'))
+    })
+})
 
 const getCode = () => {
     return Array.from(
@@ -118,25 +173,25 @@ router.post('/getCode', (req, res, next) => {
         }
     }).then(() => {
         let code = getCode()
-        /*  //测试代码
-            setKey(phoneNumber, code).then(() => {
-                res.json(resJson(0, '成功'))
-            }).catch(err => {
-                console.error("发送验证码错误：", err)
-                res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
-            })
-         */
-        /**
-         * 调用发送短信
-         */
-        smsSend(phoneNumber, code).then(() => {
-            return setKey(phoneNumber, code)
-        }).then(() => {
-            res.json(resJson(0, '成功'))
+        //测试代码
+        setKey(phoneNumber, code).then(() => {
+            res.json(resJson(0, '成功', {code}))
         }).catch(err => {
             console.error("发送验证码错误：", err)
             res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
         })
+
+        // /**
+        //  * 调用发送短信
+        //  */
+        // smsSend(phoneNumber, code).then(() => {
+        //     return setKey(phoneNumber, code)
+        // }).then(() => {
+        //     res.json(resJson(0, '成功'))
+        // }).catch(err => {
+        //     console.error("发送验证码错误：", err)
+        //     res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
+        // })
     }).catch(err => {
         console.error("redis ERROR：", err)
     })
