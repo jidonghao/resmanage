@@ -4,6 +4,7 @@ import {setToken} from "../tools/token.js";
 import {resJson} from "../index.js";
 import {smsSend} from "../sms/sms.js";
 import {getKey, setKey} from "../redis/index.js";
+import sql from "../sql/sql.js";
 
 const router = express.Router();
 
@@ -72,8 +73,45 @@ router.post('/login', (req, res, next) => {
     }
 });
 
+/**
+ * @api {POST} /api/user/loginByCode 通过验证码登录
+ * @apiGroup user
+ * @apiDescription 用于手机号+验证码登录
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {String} phoneNumber 手机号
+ * @apiParam {String} code 密码
+ * @apiParamExample {json} request-example
+ * {
+ *  "phoneNumber": "13212345678",
+ *  "code": "1234",
+ * }
+ *
+ * @apiSuccess {String} errMsg 错误信息
+ * @apiSuccess {String} errNo 600:手机号或密码错误，601:参数错误 0:成功
+ * @apiSuccess {String} phoneNumber 手机号
+ * @apiSuccess {Boolean} hasPasswd 是否设置密码
+ * @apiSuccess {String} avatar 头像
+ * @apiSuccess {Number} identity 身份
+ * @apiSuccess {String} nickName 昵称
+ * @apiSuccessExample  {json} success-example
+ * {
+ *   "phoneNumber": "13245678978",
+ *   "hasPasswd": true
+ *   "avatar": "https://xxxx"
+ *   "identity": 9,
+ *   "nickName": "昵称"
+ *   "errMsg": "成功"
+ *   "errNo": 0,
+ *   isNew?:Boolean
+ * }
+ */
 router.post('/loginByCode', (req, res, next) => {
-    let {phoneNumber, code} = req.body,userName=""
+    let {phoneNumber, code, invitationCode} = req.body, userName = ""
+    // if (invitationCode !== "DHXT2023") {
+    //     res.json(resJson(601, '邀请码错误'))
+    //     return false
+    // }
     getKey(phoneNumber).then(value => {
         if (code === value) {
             return Promise.resolve()
@@ -98,16 +136,19 @@ router.post('/loginByCode', (req, res, next) => {
                         }
                     }));
                 })
+                return new Promise(() => {
+                }) // 已完成 结束
             } else {
                 return Promise.resolve(1)   // 无该用户 去创建
             }
         }).catch(err => {
             console.error("通过验证码登录sql错误：", err)
         })
-    }).then(res => {
-        userName = `用户_${Math.floor(Math.random()*100000000)}`
-        return login.createUser(phoneNumber,userName)
-    }).then(data=>{
+    }).then(() => {
+        userName = `用户_${Math.floor(Math.random() * 100000000)}`
+        return login.createUser(phoneNumber, userName)
+    }).then(data => {
+        console.log("创建一个新用户：", phoneNumber, data.insertId)
         setToken(phoneNumber, data.insertId).then((data) => {
             res.json(resJson(0, '登录成功', {
                 token: data,
@@ -118,8 +159,11 @@ router.post('/loginByCode', (req, res, next) => {
                     identity: 1,
                     avatar: "https://oss.dhxt.fun/avatar_rabbit.png",
                     hasPasswd: false
-                }
+                },
+                isNew: true
             }));
+        }).catch(err => {
+            console.log("通过验证码登录setToken错误：", err)
         })
     }).catch(err => {
         console.error("通过验证码登录错误：", err)
@@ -195,7 +239,29 @@ router.post('/getCode', (req, res, next) => {
     }).catch(err => {
         console.error("redis ERROR：", err)
     })
+})
 
+router.post('/changePasswd', (req, res, next) => {
+    let {passwd, passwdOld} = req.body;
+    let {id = ''} = req.data
+    if (!id) {
+        res.json(resJson(602, '非法操作，已被拦截'))
+        return false
+    }
+    if (!passwd) {
+        res.json(resJson(601, '参数不对'))
+        return false
+    }
+    login.changePasswd(id, passwdOld, passwd).then(data => {
+        res.json(resJson(0, '成功'))
+    }).catch(err => {
+        if (err === "密码错误") {
+            res.json(resJson(603, '原密码错误，请重新输入'))
+        } else {
+            console.error("修改密码错误：", err)
+            res.json(resJson(500, '系统内部错误'))
+        }
+    })
 })
 
 export default router
