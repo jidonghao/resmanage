@@ -18,20 +18,20 @@
 import {ref} from 'vue'
 import {removeAuthorization} from "@/utils/auth";
 import {showModal} from "@/utils/utils";
-import {onLoad} from "@dcloudio/uni-app";
+import {onLoad, onShow} from "@dcloudio/uni-app";
 
 let nickName = ref(''),
     phoneNumber = ref(''),
     avatar = ref('')
 
-onLoad(() => {
+onShow(() => {
   let userInfo = uni.getStorageSync("userInfo")
   nickName.value = userInfo.nickName
   phoneNumber.value = userInfo.phoneNumber
   avatar.value = userInfo.avatar
 });
 
-let goPage = (url:String)=>{
+let goPage = (url: String) => {
   uni.navigateTo({url})
 }
 

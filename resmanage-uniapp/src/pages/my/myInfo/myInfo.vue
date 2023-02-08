@@ -4,8 +4,13 @@
       <image class="avatar" :src="avatar"></image>
     </arrow-list>
     <arrow-list title="昵称" showLine :value="nickName"/>
-    <arrow-list title="手机号" :value="phoneNumber"/>
-    <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
+    <view @click="goPage('/pages/my/myInfo/changePhoneNumber')">
+      <arrow-list title="手机号" :value="phoneNumber"/>
+    </view>
+    <view @click="goPage('/pages/my/myInfo/changePasswd')">
+      <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
+    </view>
+
     <view class="logout" @click="logout">退出登录</view>
   </view>
 </template>
@@ -29,7 +34,9 @@ onLoad(() => {
   avatar.value = userInfo.avatar
   hasPasswd.value = userInfo.hasPasswd
 });
-
+let goPage = (url: String) => {
+  uni.navigateTo({url})
+}
 /**
  * 登出
  */
@@ -59,7 +66,8 @@ let logout = () => {
   margin: 24upx 0;
   border: solid rgba(0, 0, 0, 0.1);
   border-width: 1upx 0;
-  &:active{
+
+  &:active {
     background: #f5f5f5;
   }
 }
