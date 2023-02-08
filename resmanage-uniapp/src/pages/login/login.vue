@@ -16,6 +16,9 @@
           <button class="getCaptchaBtn" :disabled="captchaDis" @click="getCaptcha">{{ captchaPlaceHolder }}</button>
         </view>
       </uni-forms-item>
+<!--      <uni-forms-item required label="邀请码：" name="phoneNumber">-->
+<!--        <uni-easyinput type="text" :maxlength="11" v-model="formData.invitationCode" placeholder="请输入邀请码"/>-->
+<!--      </uni-forms-item>-->
     </uni-forms>
   </view>
   <!--  -->
@@ -37,7 +40,7 @@ import {ref, unref} from 'vue'
 import loginApi from '@/api/login'
 import {setAuthorization} from "@/utils/auth";
 
-let formData = ref({phoneNumber: '', captcha: '', passwd: ''})
+let formData = ref({phoneNumber: '', captcha: '', passwd: '', invitationCode: ""})
 let useSelect = ref(1)
 let captchaPlaceHolder = ref("获取验证码")  // 验证码按钮
 let captchaDis = ref(false)
@@ -50,7 +53,7 @@ let captchaDis = ref(false)
 let verification = (phone = false, captcha = false, passwd = false) => {
   if (phone) {
     if (!formData.value.phoneNumber) {
-      uni.showToast({title: '请先输入手机号码', icon: 'error'})
+      uni.showToast({title: '请输入手机号码', icon: 'error'})
       return false
     } else if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(formData.value.phoneNumber)) {
       uni.showToast({title: '手机号格式有误', icon: 'error'})
@@ -61,10 +64,15 @@ let verification = (phone = false, captcha = false, passwd = false) => {
     if (!formData.value.captcha) {
       uni.showToast({title: '请输入验证码', icon: 'error'})
       return false
-    } else if (formData.value.captcha.length !== 4) {
+    }
+    if (formData.value.captcha.length !== 4) {
       uni.showToast({title: '验证码错误', icon: 'error'})
       return false
     }
+    // if (!formData.value.invitationCode) {
+    //   uni.showToast({title: '请先输入邀请码', icon: 'error'})
+    //   return false
+    // }
   }
 
   if (passwd) {
@@ -72,7 +80,7 @@ let verification = (phone = false, captcha = false, passwd = false) => {
       uni.showToast({title: '请输入密码', icon: 'error'})
       return false
     } else if (formData.value.passwd.length < 8) {
-      uni.showToast({title: '用户名或密码错误', icon: 'error'})
+      uni.showModal({title: '提示',content:"用户名或密码错误",showCancel:false})
       return false
     }
   }
@@ -90,6 +98,7 @@ let getCaptcha = () => {
   let captchaTimeStorage = +uni.getStorageSync('captchaTime') || null
   if (captchaTimeStorage && new Date().getTime() - captchaTimeStorage < 300000) {
     uni.showModal({title: "错误", content: "非法操作，已拦截", showCancel: false})
+    return false
   }
   loginApi.getCode({phoneNumber: formData.value.phoneNumber}).then(() => {
     uni.showToast({title: '成功发送', icon: 'success'})
@@ -121,12 +130,12 @@ let login = () => {
 
   switch (useSelect.value) {
     case 1:
-      loginApi.loginByCode({phoneNumber:formData.value.phoneNumber,code:formData.value.captcha}).then((res:any)=>{
+      loginApi.loginByCode({phoneNumber: formData.value.phoneNumber, code: formData.value.captcha,invitationCode:formData.value.invitationCode}).then((res: any) => {
         setAuthorization(res.token)
         uni.setStorageSync('userInfo', res.info)
         uni.reLaunch({url: "/pages/recent/recent"})
-      }).catch((err:any)=>{
-        uni.showModal({content: err.errMsg || "操作失败", showCancel: false})
+      }).catch((err: any) => {
+        uni.showModal({title:"提示",content: err.errMsg || "操作失败", showCancel: false})
       })
       break
     case 2:
@@ -136,7 +145,7 @@ let login = () => {
         uni.setStorageSync('userInfo', res.info)
         uni.reLaunch({url: "/pages/recent/recent"})
       }).catch((err: any) => {
-        uni.showModal({content: err.errMsg || "手机号或密码错误", showCancel: false})
+        uni.showModal({title:"提示",content: err.errMsg || "手机号或密码错误", showCancel: false})
       }).finally(() => {
         uni.hideLoading()
       })
