@@ -36,6 +36,20 @@
         "navigationBarTitleText": "账号与安全",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "pages/my/myInfo/changePasswd",
+      "style": {
+        "navigationBarTitleText": "修改密码",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/my/myInfo/changePhoneNumber",
+      "style": {
+        "navigationBarTitleText": "修改手机号",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "easycom": {
