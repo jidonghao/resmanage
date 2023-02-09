@@ -264,4 +264,38 @@ router.post('/changePasswd', (req, res, next) => {
     })
 })
 
+router.post('/changeNumber', (req, res) => {
+    let {phoneNumber, code} = req.body;
+    let {id = ''} = req.data
+    if (!phoneNumber || !code || !id) {
+        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+    if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
+        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+
+    getKey(phoneNumber).then(value => {
+        if (code === value) {
+            return Promise.resolve()
+        } else {
+            res.json(resJson(601, '验证码错误'))
+            return new Promise(() => {
+            })
+        }
+    }).then(() => {
+        login.changeNumber(phoneNumber, id).then(() => {
+            res.json(resJson(0, '成功'))
+        }).catch(err => {
+            res.json(resJson(500, '系统内部错误'))
+            console.error("修改手机号SQL出错：", err)
+        })
+    }).catch(err => {
+        res.json(resJson(500, '系统内部错误'))
+        console.error("修改手机号出错：", err)
+    })
+
+})
+
 export default router

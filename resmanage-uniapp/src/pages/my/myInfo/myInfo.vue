@@ -18,7 +18,7 @@
 <script setup lang="ts">
 // import arrowList from "/components/arrow-list/arrow-list.vue"
 import {ref} from 'vue'
-import {onLoad} from "@dcloudio/uni-app";
+import {onShow} from "@dcloudio/uni-app";
 import {showModal} from "@/utils/utils";
 import {removeAuthorization} from "@/utils/auth";
 
@@ -27,7 +27,7 @@ let nickName = ref(''),
     avatar = ref(''),
     hasPasswd = ref(false)
 
-onLoad(() => {
+onShow(() => {
   let userInfo = uni.getStorageSync("userInfo")
   nickName.value = userInfo.nickName
   phoneNumber.value = userInfo.phoneNumber

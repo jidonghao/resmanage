@@ -47,7 +47,7 @@
     {
       "path": "pages/my/myInfo/changePhoneNumber",
       "style": {
-        "navigationBarTitleText": "修改手机号",
+        "navigationBarTitleText": "更换手机号",
         "enablePullDownRefresh": false
       }
     }

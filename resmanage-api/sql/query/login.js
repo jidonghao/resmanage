@@ -17,6 +17,7 @@ let login = {
             }
         })
     },
+    changeNumber: (phoneNumber, id) => sql(`UPDATE user set phone_number = "${phoneNumber}" where id = ${id}`)
 }
 
 export default login

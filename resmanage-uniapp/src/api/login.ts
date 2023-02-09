@@ -5,6 +5,7 @@ let login = {
     getCode: (data: Object):any => request('api/user/getCode', 'POST', data),
     loginByCode: (data: Object):any => request('api/user/loginByCode', 'POST', data),
     changePasswd:(data: Object):any => request('api/user/changePasswd', 'POST', data),
+    changeNumber:(data: Object):any => request('api/user/changeNumber', 'POST', data),
 }
 export default login
 
