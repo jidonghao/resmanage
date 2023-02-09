@@ -298,4 +298,18 @@ router.post('/changeNumber', (req, res) => {
 
 })
 
+router.post('/changeNickname', (req, res) => {
+    let {nickname} = req.body;
+    let {id = ''} = req.data
+    if (!id||!nickname) {
+        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+    login.changeNickname(nickname, id).then(() => {
+        res.json(resJson(0, '修改成功'))
+    }).catch(err => {
+        res.json(resJson(500, '系统内部错误'))
+        console.error("修改昵称SQL错误：", err)
+    })
+})
 export default router
