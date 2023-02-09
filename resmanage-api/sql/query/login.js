@@ -17,7 +17,8 @@ let login = {
             }
         })
     },
-    changeNumber: (phoneNumber, id) => sql(`UPDATE user set phone_number = "${phoneNumber}" where id = ${id}`)
+    changeNumber: (phoneNumber, id) => sql(`UPDATE user set phone_number = "${phoneNumber}" where id = ${id}`),
+    changeNickname: (nickname, id) => sql(`UPDATE user set nick_name = "${nickname}" where id = ${id}`),
 }
 
 export default login

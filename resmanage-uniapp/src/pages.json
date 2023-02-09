@@ -19,7 +19,7 @@
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "浏览",
-        "navigationStyle":"custom"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -48,6 +48,13 @@
       "path": "pages/my/myInfo/changePhoneNumber",
       "style": {
         "navigationBarTitleText": "更换手机号",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/my/myInfo/changeNickname",
+      "style": {
+        "navigationBarTitleText": "修改昵称",
         "enablePullDownRefresh": false
       }
     }
