@@ -6,6 +6,7 @@ import {accessKeySecret, accessKeyId} from "../sms/sms-setting.js";
 import path from "path";
 import OSS from 'ali-oss'
 import multer from "multer";
+// import Busboy from "busboy"
 
 const client = new OSS({
     region: 'oss-cn-beijing',
@@ -34,7 +35,7 @@ const putFile2Ali = (fileName, filePath) => new Promise((resolve, reject) => {
     })
 })
 
-router.post('/upload', multer({dest: 'uploadFiles/'}).array('files'), async (req, res) => {
+router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req, res) => {
     let files = req.files, fileList = [];
     let {id = ''} = req.data
     if (!id) {
