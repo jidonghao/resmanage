@@ -1,8 +1,10 @@
 <template>
   <view class="contain">
-    <arrow-list title="头像" showLine>
-      <image class="avatar" :src="avatar"></image>
-    </arrow-list>
+    <view @click="goPage('/pages/my/myInfo/changeAvatar')">
+      <arrow-list title="头像" showLine>
+        <image class="avatar" :src="avatar"></image>
+      </arrow-list>
+    </view>
     <view @click="goPage('/pages/my/myInfo/changeNickname')">
       <arrow-list title="昵称" showLine :value="nickName"/>
     </view>

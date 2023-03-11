@@ -17,8 +17,9 @@ let login = {
             }
         })
     },
-    changeNumber: (phoneNumber, id) => sql(`UPDATE user set phone_number = "${phoneNumber}" where id = ${id}`),
-    changeNickname: (nickname, id) => sql(`UPDATE user set nick_name = "${nickname}" where id = ${id}`),
+    changeNumber: (phoneNumber, id) => sql(`UPDATE user set phone_number = "${phoneNumber}", update_time = "${tools.formatDate(new Date().getTime())}" where id = ${id}`),
+    changeNickname: (nickname, id) => sql(`UPDATE user set nick_name = "${nickname}", update_time = "${tools.formatDate(new Date().getTime())}" where id = ${id}`),
+    changeAvatar: (avatar, id) => sql(`UPDATE user set avatar = "${avatar}", update_time = "${tools.formatDate(new Date().getTime())}" where id = ${id}`),
 }
 
 export default login

@@ -312,4 +312,18 @@ router.post('/changeNickname', (req, res) => {
         console.error("修改昵称SQL错误：", err)
     })
 })
+router.post('/changeAvatar', (req, res) => {
+    let {avatar} = req.body;
+    let {id = ''} = req.data
+    if (!id||!avatar) {
+        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
+        return false
+    }
+    login.changeAvatar(avatar, id).then(() => {
+        res.json(resJson(0, '修改成功'))
+    }).catch(err => {
+        res.json(resJson(500, '系统内部错误'))
+        console.error("修改头像SQL错误：", err)
+    })
+})
 export default router
