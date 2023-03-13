@@ -26,3 +26,4 @@ yarn.lock
 /sql/sql-setting.js
 /sms/sms-setting.js
 /apiDoc/
+/.env.dev

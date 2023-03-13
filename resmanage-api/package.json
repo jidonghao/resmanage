@@ -6,12 +6,16 @@
   "type": "module",
   "author": "jidonghao <ji534@outlook.com>",
   "scripts": {
-    "start": "nodemon ./index.js",
+    "dev": "cross-env NODE_ENV=dev nodemon ./index.js",
+    "prd": "cross-env NODE_ENV=production nodemon ./index.js",
     "getDoc": "apiDoc -i ./routes/ -o apiDoc/"
   },
   "dependencies": {
     "@alicloud/pop-core": "^1.7.12",
     "body-parser": "^1.20.0",
+    "chalk": "^5.2.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
     "express": "^4.18.1",
     "express-jwt": "6.1.1",
     "express-static": "^1.2.6",
