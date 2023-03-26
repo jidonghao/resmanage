@@ -1,12 +1,15 @@
 import Core from "@alicloud/pop-core"
-import {accessKeyId, accessKeySecret} from "./sms-setting.js";
+import ENV from '../config/index.js'
 
 const client = new Core({
-    accessKeyId: accessKeyId,
-    accessKeySecret: accessKeySecret,
-    endpoint: 'https://dysmsapi.aliyuncs.com',
-    apiVersion: '2017-05-25'
-});
+        accessKeyId: ENV.ACCESS_KEY_ID,
+        accessKeySecret: ENV.ACCESS_KEY_SECRET,
+        endpoint: 'https://dysmsapi.aliyuncs.com',
+        apiVersion: '2017-05-25'
+    }), SIGN_NAME = ENV.SMS_SIGN_NAME,
+    TEMPLATE_CODE = ENV.SMS_TEMPLATE_CODE
+
+
 /**
  * 发送验证码
  * @param phoneNumber 手机号
@@ -15,8 +18,8 @@ const client = new Core({
  */
 export const smsSend = (phoneNumber, code) => new Promise((resolve, reject) => {
     client.request('SendSms', {
-        "SignName": "dhxt资源管理系统",
-        "TemplateCode": "SMS_268616149",
+        "SignName": SIGN_NAME,
+        "TemplateCode": TEMPLATE_CODE,
         "PhoneNumbers": phoneNumber,
         "TemplateParam": `{\"code\":\"${code}\"}`
     }, {

@@ -1,21 +1,22 @@
 import {resJson} from "../index.js";
 import express from "express";
 import fs from "fs";
+
 const router = express.Router();
-import {accessKeySecret, accessKeyId} from "../sms/sms-setting.js";
 import path from "path";
 import OSS from 'ali-oss'
 import multer from "multer";
-// import Busboy from "busboy"
+
+import ENV from "../config/index.js"
 
 const client = new OSS({
-    region: 'oss-cn-beijing',
-    accessKeyId: accessKeyId,
-    accessKeySecret: accessKeySecret,
-    bucket: 'jdh-bucket',
-    secure: true,
-    endpoint: "oss.dhxt.fun",
-    cname: true
+    region: ENV.OSS_REGION,
+    accessKeyId: ENV.ACCESS_KEY_ID,
+    accessKeySecret: ENV.ACCESS_KEY_SECRET,
+    bucket: ENV.OSS_BUCKET,
+    secure: ENV.OSS_SECURE,
+    endpoint: ENV.OSS_ENDPOINT,
+    cname: ENV.OSS_CNAME
 })
 
 
@@ -47,7 +48,7 @@ router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req,
         return false
     }
 
-    try{
+    try {
         await files.reduce(async (memo, item) => {
             await memo
             let newName = 'RES-' + Date.now().toString() + '-' + item.originalname
@@ -57,10 +58,10 @@ router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req,
             fileList.push(file)
         }, undefined);
         res.json(resJson(0, '成功', {fileList}))
-    }catch (e) {
-            console.error("上传文件失败foreach：",e)
-            res.json(resJson(500, '系统内部错误'))
-            return false
+    } catch (e) {
+        console.error("上传文件失败foreach：", e)
+        res.json(resJson(500, '系统内部错误'))
+        return false
     }
 })
 
