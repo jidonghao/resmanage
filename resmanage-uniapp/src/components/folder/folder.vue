@@ -22,7 +22,7 @@ import {ref} from 'vue'
 
 const props = defineProps<{ id?: Number, fileName: String, imgPath?: String, videoPath?: String, isNew?: Boolean }>()
 let fileName = ref(props.fileName), showMenuFlag = ref(false)
-let showMenu = (e) => {
+let showMenu = (e:any) => {
   console.log(e)
   showMenuFlag.value = true
   e.preventDefault()
@@ -35,7 +35,8 @@ let showMenu = (e) => {
   cursor: pointer;
   padding: 12upx;
   margin: 12upx;
-  width: 170upx;
+  margin-right: 0;
+  width: 200upx;
   text-align: center;
   display: flex;
   position: relative;

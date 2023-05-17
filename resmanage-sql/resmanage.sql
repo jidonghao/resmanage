@@ -132,7 +132,7 @@ CREATE TABLE `user`  (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, '用户123212', '12345678', 9, '16688171257', 'https://oss.dhxt.fun/avatar_rabbit.png', 0, '2023-02-07 12:48:17', '2023-02-07 12:48:23');
+INSERT INTO `user` VALUES (1, '用户123212', '12345678', 9, '16612345678', 'https://oss.dhxt.fun/avatar_rabbit.png', 0, '2023-02-07 12:48:17', '2023-02-07 12:48:23');
 INSERT INTO `user` VALUES (2, 'liuming', '12345678', 9, '15512345678', 'https://oss.dhxt.fun/avatar_rabbit.png', 0, '2023-02-07 12:48:20', '2023-02-07 12:48:27');
 INSERT INTO `user` VALUES (3, '测试', NULL, 1, '13247362734', 'https://oss.dhxt.fun/avatar_rabbit.png', 0, '2020-01-01 00:00:00', '2020-01-01 00:00:00');
 INSERT INTO `user` VALUES (4, '用户_7525979', NULL, 1, '16688171257', 'https://oss.dhxt.fun/avatar_rabbit.png', 0, '2023-02-07 13:02:53', '2023-02-07 13:02:53');

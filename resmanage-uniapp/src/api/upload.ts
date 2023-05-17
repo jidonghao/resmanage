@@ -12,7 +12,19 @@ export const uploadFile = (files: UniApp.UploadFileOptionFiles[]) => new Promise
             'user': 'test',
         },
         success: (uploadFileRes) => {
-            resolve(JSON.parse(uploadFileRes.data))
+            const data = JSON.parse(uploadFileRes.data)
+            if(data.errNo!==0){
+                switch (data.errNo){
+                    case 501:
+                        uni.navigateTo({url:'/pages/login/login'})
+                        break
+                    default:
+                        reject(data)
+                        break
+                }
+            }else{
+                resolve(data)
+            }
         },
         fail: (err) => {
             console.log(err)

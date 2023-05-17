@@ -1,26 +1,34 @@
 <template>
-  <view class="nav-style" :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
-        @click="closeMenu">
-    <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
-      <view v-for="i in 3" :key="i"/>
-    </view>
-    <view class="searchInput">
-      <uni-easyinput suffixIcon="search" type="text" v-model="searchValue" placeholder="搜索文件名" @iconClick="search"
-                     @confirm="search" ConfirmType="search"/>
-    </view>
-  </view>
-  <view class="topLeftMenu" :class="{'topLeftMenuHide':menuHideIng}" v-show="showMenu"
-        :style="`top:${statusBar.navHeight}px`">
-    <view v-for="item in topMenuOptions" :key="item.value" @click="selectMenu(item.value)" class="item"
-          :style="`${item.hideBorder?'--border:0':''}`">{{ item.label }}
-    </view>
-  </view>
+        <view class="nav-style" :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
+              @click="closeMenu">
+            <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
+                <view v-for="i in 3" :key="i"/>
+            </view>
+            <view class="searchInput">
+                <uni-easyinput suffixIcon="search" type="text" v-model="searchValue" placeholder="搜索文件名" @iconClick.stop="search"
+                               @confirm="search" ConfirmType="search"/>
+            </view>
+        </view>
+        <view class="topLeftMenu" :class="{'topLeftMenuHide':menuHideIng}" v-show="showMenu"
+              :style="`top:${statusBar.navHeight}px`">
+            <view v-for="item in topMenuOptions" :key="item.value" @click.stop="selectMenu(item.value)" class="item"
+                  :style="`${item.hideBorder?'--border:0':''}`">{{ item.label }}
+            </view>
+        </view>
+    <scroll-view class="container" :refresher-threshold="100" scroll-y  :style="`padding-top:${statusBar.navHeight}px;`"
+                 refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
+                 @scrolltolower="getMoreList" lower-threshold="100px">
+        <view class="scroll-container">
+            <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"
+                    @click.stop="clickFile(item)"/>
+        </view>
+    </scroll-view>
 
-  <view class="container" @click="closeMenu" :style="`padding-top:${statusBar.navHeight}px`">
-    <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"
-            @click="clickFile(item)"/>
-<!--    <view class="pH"/>-->
-  </view>
+<!--        <view class="container" @click="closeMenu" :style="`padding-top:${statusBar.navHeight}px`">-->
+<!--            <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"-->
+<!--                    @click.stop="clickFile(item)"/>-->
+<!--            &lt;!&ndash;    <view class="pH"/>&ndash;&gt;-->
+<!--        </view>-->
 </template>
 
 <script setup lang="ts">
@@ -40,25 +48,64 @@ onLoad(() => {
 let formQuery = ref({
       page: 1, limit: 20, folderId: -1, fileName: ""
     }),
+    total = ref(0),pages=ref(0),list = ref<any[]>([]),refreshing=ref(false),
     queryFolderIdList: Number[] = [-1],
     fileList: any = ref([]),
-    queryGetList = () => {
+    queryGetList = (showTips=false) => {
       file.queryFile(unref(formQuery)).then((res: any) => {
-        fileList.value = res.list
+          if(formQuery.value.page===1){
+              fileList.value = res.list
+          }else{
+              fileList.value = [...fileList.value,...res.list]
+          }
+          total.value = res.total
+          pages.value = res.pages
+          if(showTips){
+              setTimeout(()=>{
+                  refreshing.value=false
+                  uni.showToast({
+                      title:'加载成功',
+                      icon:'none'
+                  })
+              },600)
+          }
       }).catch(err => {
-
+          console.error(err)
+          uni.showToast({
+              title:err.errMsg||'加载失败',
+              icon:'none'
+          })
+          refreshing.value=false
       })
     }
-
+function pullDown(){
+    formQuery.value.page = 1
+    refreshing.value=true
+    queryGetList(true)
+}
+function getMoreList(){
+    if(pages.value>formQuery.value.page++){
+        queryGetList()
+    }else{
+        uni.showToast({
+            title:'没有更多了',
+            icon:'none'
+        })
+    }
+}
 onReady(() => {
   queryGetList()
 })
 
+const folderShowList = [-1]
 // 点击文件
 let clickFile = (item: any) => {
-  if (item.isNew) return false
+    completeAddFolder()
+  if (item.isNew||isAddFolder.value) return false
   switch (item.type) {
     case 1: // 文件夹
+   // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
+        console.log(item.id)
       break
     case 2: // img
       break
@@ -78,8 +125,31 @@ const topMenuOptions = ref([
   {label: "新建文件夹", value: 1},
   {label: "上传文件", value: 2, hideBorder: true}
 ])
+const isAddFolder = ref(false) // 是否正新增文件夹
+let editFileIndex = -1
+/**
+ * 完成文件夹编辑
+ */
+function completeAddFolder(){
+    if(!isAddFolder.value||editFileIndex === -1)return false
+    console.log("完成文件夹编辑")
+    uni.showLoading({title:'保存中'})
+    file.addFolder({folderName:fileList.value[editFileIndex].fileName}).then((res:any)=>{
+        fileList.value[editFileIndex].id = res.id
+        isAddFolder.value = false
+        fileList.value[editFileIndex].isNew = false
+    }).catch((err:any)=>{
+        uni.showToast({
+            title:err.errMsg||'系统繁忙，请稍后再试',
+            icon:'none'
+        })
+    }).finally(()=>{
+        uni.hideLoading()
+    })
+}
 
 let closeMenu = () => {
+   completeAddFolder()
       if (showMenu.value) {
         menuHideIng.value = true
         setTimeout(() => {
@@ -89,6 +159,7 @@ let closeMenu = () => {
       }
     },
     showMenuHandler = () => {
+    if(isAddFolder.value) return false
       if (showMenu.value) {
         closeMenu()
       } else {
@@ -100,7 +171,9 @@ let closeMenu = () => {
         case 0:
           break
         case 1:
-          fileList.value.unshift({id: void 0, fileName: '新建文件夹', isNew: true})
+          fileList.value.unshift({id: -1, fileName: '新建文件夹', isNew: true})
+            editFileIndex = 0
+          isAddFolder.value = true
           break
         case 2:
           break
@@ -110,19 +183,26 @@ let closeMenu = () => {
 
 <style scoped lang="scss">
 .container {
+  padding: 0;
   background: #fefefe;
-  height: 100%;
+  height: calc(100vh - 50px) ;
   width: 100vw;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  //display: flex;
+  //flex-direction: row;
+  //flex-wrap: wrap;
+  //align-content: flex-start;
   overflow: scroll;
   overflow-x: hidden;
 
   .container_scroll__view {
     height: 200upx;
   }
+}
+.scroll-container{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
 }
 
 .nav-style {
