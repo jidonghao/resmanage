@@ -1,5 +1,5 @@
 <template>
-  <view class="folder-folder" @longpress="showMenu">
+  <view class="folder-folder">
     <image class="folder-img" v-if="!props.imgPath&&!props.videoPath" src="@/static/icon/folder.svg"/>
 
     <view v-if="props.imgPath" class="folder-img-view">
@@ -12,21 +12,53 @@
     </view>
 
     <view v-if="!props.isNew" class="file-name">{{ props.fileName }}</view>
-    <textarea auto-height maxlength="24" class="file-name-input" v-else type="text" v-model="fileName" autofocus
-              confirm-type="done"/>
+    <textarea auto-height maxlength="24" class="file-name-input" v-else
+              type="text" v-model="fileName" autofocus
+              confirm-type="done" @input="fileNameChange" @focusout="completeEdit"/>
+
+      <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">
+          <view class="menu menu-view" @click.stop="false">
+              <view class="item">重命名</view>
+              <view class="item danger" @click="deleteFile">删除</view>
+          </view>
+      </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import {ref} from 'vue'
 
-const props = defineProps<{ id?: Number, fileName: String, imgPath?: String, videoPath?: String, isNew?: Boolean }>()
-let fileName = ref(props.fileName), showMenuFlag = ref(false)
+const props = defineProps<{
+    id?: Number,index:Number|String, fileName: String,
+    imgPath?: String, videoPath?: String, isNew?: Boolean,
+    showMenu: Boolean,
+}>()
+const emit = defineEmits<{
+    onChange:(e: {  value:String,index:String|Number  })=>void,
+    completeAddFolder:()=>void,
+    closeMenu:()=>void,
+}>()
+const fileName = ref(props.fileName),
+    showMenuFlag = ref(false)
+function deleteFile(){
+
+}
+function closeMenu(){
+    emit('closeMenu')
+}
 let showMenu = (e:any) => {
   console.log(e)
   showMenuFlag.value = true
   e.preventDefault()
   return false
+}
+function completeEdit(e:any){
+    console.log(111)
+    emit('completeAddFolder')
+}
+function fileNameChange(e:any){
+    console.log(e.detail.value,props.index)
+    emit('onChange',{value:e.detail.value,index:props.index})
 }
 </script>
 
@@ -37,8 +69,9 @@ let showMenu = (e:any) => {
   margin: 12upx;
   margin-right: 0;
   width: 200upx;
+  max-width: 25vw;
   text-align: center;
-  display: flex;
+  display: inline-flex;
   position: relative;
   align-items: center;
   justify-content: flex-start;
@@ -92,6 +125,28 @@ let showMenu = (e:any) => {
     top: 140upx;
     background: rgba(240, 240, 240, 0.9);
     border-radius: 12upx;
+  }
+
+  .menu-view{
+    width: 260upx;
+    position: absolute;
+    top: 60%;
+
+    .item{
+      text-align: left;
+    }
+    .danger{
+      color: var(--color-danger);
+    }
+  }
+  .folder-menu-back{
+    width: 100vw;
+    height: 100vh;
+    background: rgba(30, 144, 255, 0.02);
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 }
 </style>

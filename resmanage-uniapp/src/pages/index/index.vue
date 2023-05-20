@@ -1,34 +1,40 @@
 <template>
+    <view class="global--container">
         <view class="nav-style" :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
               @click="closeMenu">
-            <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
-                <view v-for="i in 3" :key="i"/>
+            <view class="leftControl" @click="goBackFolder">
+                <uni-icons type="back" size="24" style="margin-left: 10upx"  v-if="folderShowList.length>1"/>
+                <view class="leftControl--label"  v-if="folderShowList.length>1">{{folderShowList[folderShowList.length-1].label}}</view>
             </view>
-            <view class="searchInput">
-                <uni-easyinput suffixIcon="search" type="text" v-model="searchValue" placeholder="搜索文件名" @iconClick.stop="search"
-                               @confirm="search" ConfirmType="search"/>
+            <view class="rightControl" :class="{'scaleRightControl':folderShowList.length>1}">
+                <view class="searchInput">
+                    <uni-easyinput suffixIcon="search" type="text" v-model="searchValue" placeholder="搜索文件名" @iconClick.stop="search"
+                                   @confirm="search" ConfirmType="search"/>
+                </view>
+                <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
+                    <view v-for="i in 3" :key="i"/>
+                </view>
             </view>
         </view>
-        <view class="topLeftMenu" :class="{'topLeftMenuHide':menuHideIng}" v-show="showMenu"
+        <view class="topLeftMenu menu" :class="{'topLeftMenuHide':menuHideIng}" v-show="showMenu"
               :style="`top:${statusBar.navHeight}px`">
             <view v-for="item in topMenuOptions" :key="item.value" @click.stop="selectMenu(item.value)" class="item"
                   :style="`${item.hideBorder?'--border:0':''}`">{{ item.label }}
             </view>
         </view>
-    <scroll-view class="container" :refresher-threshold="100" scroll-y  :style="`padding-top:${statusBar.navHeight}px;`"
+    <scroll-view class="container" :refresher-threshold="100" :scroll-y="enableScroll"
+                 :style="`padding-top:${statusBar.navHeight}px;`"
                  refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
-                 @scrolltolower="getMoreList" lower-threshold="100px">
+                 @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
         <view class="scroll-container">
-            <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"
-                    @click.stop="clickFile(item)"/>
+            <folder v-for="(item,i) in fileList" :index="i"
+                    :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName" :showMenu="item.showMenu"
+                    @click.stop="clickFile(item)"  @longpress.stop="showFileMenu($event,item,+i)"
+                    @onChange="fileDetailChange" @completeAddFolder="completeAddFolder" @closeMenu="closeFileMenu($event,item,+i)"/>
         </view>
     </scroll-view>
-
-<!--        <view class="container" @click="closeMenu" :style="`padding-top:${statusBar.navHeight}px`">-->
-<!--            <folder v-for="item in fileList" :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName"-->
-<!--                    @click.stop="clickFile(item)"/>-->
-<!--            &lt;!&ndash;    <view class="pH"/>&ndash;&gt;-->
-<!--        </view>-->
+    </view>
+    <my-custom-tab-bar :index="1"/>
 </template>
 
 <script setup lang="ts">
@@ -46,12 +52,14 @@ onLoad(() => {
 })
 
 let formQuery = ref({
-      page: 1, limit: 20, folderId: -1, fileName: ""
+      page: 1, limit: 100, folderId: -1, fileName: ""
     }),
     total = ref(0),pages=ref(0),list = ref<any[]>([]),refreshing=ref(false),
     queryFolderIdList: Number[] = [-1],
     fileList: any = ref([]),
     queryGetList = (showTips=false) => {
+      formQuery.value.folderId = folderShowList.value[folderShowList.value.length-1].id
+
       file.queryFile(unref(formQuery)).then((res: any) => {
           if(formQuery.value.page===1){
               fileList.value = res.list
@@ -78,6 +86,22 @@ let formQuery = ref({
           refreshing.value=false
       })
     }
+const enableScroll = ref(true)
+function showFileMenu(event:Event,item:any,i:number){
+    fileList.value[i].showMenu = true
+    enableScroll.value = false
+    // isAddFolder.value = true
+    // console.log(event.target.)
+    event.preventDefault()
+    return false
+}
+function closeFileMenu(event:Event,item:any,i:number){
+    fileList.value[i].showMenu = false
+    enableScroll.value = true
+    event.preventDefault()
+    return false
+}
+
 function pullDown(){
     formQuery.value.page = 1
     refreshing.value=true
@@ -97,15 +121,32 @@ onReady(() => {
   queryGetList()
 })
 
-const folderShowList = [-1]
+const folderShowList = ref([
+    {label: '/',id: -1}
+])
+function fileDetailChange(e: { value:String,index:String|Number }){
+    fileList.value[+e.index].fileName = e.value
+}
+function goBackFolder(){
+    folderShowList.value.pop()
+    formQuery.value.page = 1
+    formQuery.value.folderId = folderShowList.value[  folderShowList.value.length-1].id
+    queryGetList()
+}
 // 点击文件
 let clickFile = (item: any) => {
-    completeAddFolder()
-  if (item.isNew||isAddFolder.value) return false
+  if (item.isNew) return false
+    // completeAddFolder()
+  if(isAddFolder.value) return false
   switch (item.type) {
     case 1: // 文件夹
    // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
-        console.log(item.id)
+        folderShowList.value.push({
+            label: item.fileName,
+            id: item.id
+        })
+        formQuery.value.page = 1
+        queryGetList()
       break
     case 2: // img
       break
@@ -132,9 +173,11 @@ let editFileIndex = -1
  */
 function completeAddFolder(){
     if(!isAddFolder.value||editFileIndex === -1)return false
-    console.log("完成文件夹编辑")
     uni.showLoading({title:'保存中'})
-    file.addFolder({folderName:fileList.value[editFileIndex].fileName}).then((res:any)=>{
+    file.addFolder({
+        folderName:fileList.value[editFileIndex].fileName,
+        folderId: folderShowList.value[folderShowList.value.length-1].id
+    }).then((res:any)=>{
         fileList.value[editFileIndex].id = res.id
         isAddFolder.value = false
         fileList.value[editFileIndex].isNew = false
@@ -199,10 +242,10 @@ let closeMenu = () => {
   }
 }
 .scroll-container{
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  //display: flex;
+  //flex-direction: row;
+  //flex-wrap: wrap;
+  //align-content: flex-start;
 }
 
 .nav-style {
@@ -211,23 +254,68 @@ let closeMenu = () => {
   width: 100vw;
   display: flex;
   z-index: 998;
+  justify-content: space-between;
   align-items: center;
-  justify-content: flex-start;
   box-sizing: border-box;
-  padding: 0 24upx;
+  padding: 0 12upx;
 
-  .searchInput {
-    margin-left: 24upx;
-    width: 420upx;
+    @media screen and (min-width: 1023px) {
+        width: calc(100vw - 60px);
+    }
+
+  .leftControl{
+    display: flex;
+    //max-width: 360upx;
+    align-items: center;
+      animation: leftControl 0.5s 0 ease-in-out;
+      overflow: hidden;
+
+      @keyframes leftControl {
+          0%{
+              width: 0;
+          }
+          100%{
+              width: 400upx;
+          }
+      }
+
+    .leftControl--label{
+      width: 100%;
+      white-space: nowrap;
+      padding-right: 24upx;
+      font-size: 30upx;
+      //text-overflow: ellipsis;
+      overflow: hidden;
+    }
   }
+  .rightControl{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 750rpx;
+      transition: all 0.2s;
+      .searchInput {
+          margin-left: 24upx;
+          width: 100%;
+      }
+      .filterBtn{
+          flex-shrink: 0;
+      }
+  }
+    .scaleRightControl{
+        @media screen and (max-width: 1023px) {
+            width: 500rpx;
+        }
+    }
 
   .filterBtn {
+    margin-left: 16upx;
     cursor: pointer;
     --background-color: #3d3d3d;
     border: 4upx solid var(--background-color);
     border-radius: 50%;
-    width: 40upx;
-    height: 40upx;
+    width: 36rpx;
+    height: 36rpx;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -249,41 +337,11 @@ let closeMenu = () => {
 
 .topLeftMenu {
   width: 320upx;
-  z-index: 999;
-  opacity: 0.95;
-  height: auto;
-  margin-left: 30upx;
+  margin-right: 30upx;
   margin-top: 12upx;
   position: absolute;
-  border-radius: 12upx;
-  overflow: hidden;
-  color: black;
-  box-shadow: 0 0 20upx 10upx rgba(0, 0, 0, 0.2);
-  transform-origin: left -12upx;
-  animation: show 0.15s ease-in-out forwards;
-
-  @keyframes show {
-    0% {
-      transform: scale(0);
-    }
-    90% {
-      transform: scale(1.02);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-
-  .item {
-    --border: 1upx;
-    padding: 12upx;
-    background: rgba(255, 255, 255, 1);
-    border-bottom: var(--border) solid rgba(187, 187, 187, 0.6);
-
-    &:active {
-      background: #f5f5f5;
-    }
-  }
+  top: 0;
+  right: 0;
 }
 
 .topLeftMenuHide {
@@ -299,5 +357,42 @@ let closeMenu = () => {
       transform: scale(0);
     }
   }
+}
+
+.navbar--address{
+    height: 56upx;
+    width: 100vw;
+  overflow: hidden;
+  box-sizing: border-box;
+    background: #f5f5f5;
+    position: fixed;
+  display: flex;
+  align-items: center;
+justify-content: flex-start;
+  z-index: 99;
+.address{
+  width: 100%;
+  padding: 0 12upx;
+  box-sizing: border-box;
+  height: 96%;
+  border-radius: 12upx;
+  margin-left: 24upx;
+  margin-bottom: 6upx;
+  background: white;
+  display: flex;
+  align-items: center;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  view{
+    font-size: 20upx;
+    padding: 0 12upx;
+    border-radius: 6upx;
+    margin-right: 4upx;
+    background: whitesmoke;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
 }
 </style>

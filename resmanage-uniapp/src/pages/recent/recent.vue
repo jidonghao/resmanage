@@ -1,22 +1,20 @@
 <template>
-  <view>
-    
+  <view class="global--container">
+
   </view>
+  <my-custom-tab-bar :index="0"/>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
+<script setup lang="ts">
+import {onShow} from "@dcloudio/uni-app";
+import {checkLogin} from "@/utils/utils";
 
-    }
-  },
-  methods: {
+onShow(()=>{
+    checkLogin()
+})
 
-  }
-}
 </script>
 
-<style scoped>
+<style scoped lang="">
 
 </style>

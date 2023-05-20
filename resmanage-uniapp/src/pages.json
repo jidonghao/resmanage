@@ -79,7 +79,8 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "资源管理",
     "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8"
+    "backgroundColor": "#F8F8F8",
+    "navigationBarHidden": true
   },
   "tabBar": {
     "borderStyle": "black",

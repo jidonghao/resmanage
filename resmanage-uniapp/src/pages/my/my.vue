@@ -1,5 +1,5 @@
 <template>
-  <view class="contain">
+  <view class="contain global--container">
     <view class="myInfo item" @click="goPage('/pages/my/myInfo/myInfo')">
       <image class="avatar" :src="avatar"></image>
       <view>
@@ -11,14 +11,16 @@
     <arrow-list title="设置"/>
     <arrow-list title="关于"/>
   </view>
+    <my-custom-tab-bar :index="2"/>
 </template>
 
 <script setup lang="ts">
 // import arrowList from "../../components/arrow-list/arrow-list.vue"
 import {ref} from 'vue'
-import {removeAuthorization} from "@/utils/auth";
-import {showModal} from "@/utils/utils";
+import {getAuthorization, removeAuthorization} from "@/utils/auth";
+import {checkLogin, showModal} from "@/utils/utils";
 import {onLoad, onShow} from "@dcloudio/uni-app";
+import routingIntercept from "@/utils/permission";
 
 let nickName = ref(''),
     phoneNumber = ref(''),
@@ -34,7 +36,9 @@ onShow(() => {
 let goPage = (url: String) => {
   uni.navigateTo({url})
 }
-
+onShow(()=>{
+    checkLogin()
+})
 
 </script>
 
