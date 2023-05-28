@@ -1,7 +1,7 @@
 import {resJson} from "../index.js";
 import express from "express";
 import fs from "fs";
-
+import fileSql from "../sql/query/file.js";
 const router = express.Router();
 import path from "path";
 import OSS from 'ali-oss'
@@ -38,6 +38,8 @@ const putFile2Ali = (fileName, filePath) => new Promise((resolve, reject) => {
 
 router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req, res) => {
     let files = req.files, fileList = [];
+    let {flag, folderId, typeList} = req.body
+    typeList = typeList.split(',')
     let {id = ''} = req.data
     if (!id) {
         res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
@@ -49,13 +51,24 @@ router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req,
     }
 
     try {
-        await files.reduce(async (memo, item) => {
+        await files.reduce(async (memo, item, i) => {
             await memo
             let newName = 'RES-' + Date.now().toString() + '-' + item.originalname
             let newPath = "uploadFiles/" + newName
             fs.renameSync("uploadFiles/" + item.filename, newPath);
             let file = await putFile2Ali(newName, newPath)
-            fileList.push(file)
+            const filenameParts = item.originalname.split('.');
+            const extension = filenameParts[filenameParts.length - 1];  // 获取到文件扩展名
+            fileList.push({url:file,originalName:item.originalname,extension})
+            if(flag==='default'){   // 如果flag是default 就调用上传文件接口
+                try{
+                    const sqlBack =  await fileSql.addFile({userId:id,
+                        fileName:item.originalname,folderId,typeDetail:extension,filePath:file,type:typeList[i]})
+                    fileList[fileList.length-1].id = sqlBack.insertId
+                }catch (e) {
+                    console.error("上传文件添加到数据库失败：", e)
+                }
+            }
         }, undefined);
         res.json(resJson(0, '成功', {fileList}))
     } catch (e) {

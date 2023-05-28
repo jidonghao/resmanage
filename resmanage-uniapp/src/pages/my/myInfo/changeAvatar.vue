@@ -46,7 +46,7 @@ let chooseImg = () => {
         filesList.forEach(item=>{
           files.push({name:'file',uri:item})
         })
-        uploadFile(files).then((res:any)=>{
+        uploadFile(files,'avatar',{}).then((res:any)=>{
           console.log(res.fileList[0])
           login.changeAvatar({avatar:res.fileList[0]}).then(() => {
             avatar.value =  res.fileList[0]

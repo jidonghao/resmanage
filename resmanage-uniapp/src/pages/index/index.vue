@@ -27,12 +27,19 @@
                  refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
                  @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
         <view class="scroll-container">
-            <folder v-for="(item,i) in fileList" :index="i"
+            <folder v-for="(item,i) in fileList" :index="i" :filePath="item.filePath" :typeDetail="item.typeDetail"
                     :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName" :showMenu="item.showMenu"
-                    @click.stop="clickFile(item)"  @longpress.stop="showFileMenu($event,item,+i)"
+                    :fullType="item.fullType" @click.stop="clickFile(item)"  @longpress.stop="showFileMenu($event,item,+i)"
                     @onChange="fileDetailChange" @completeAddFolder="completeAddFolder" @closeMenu="closeFileMenu($event,item,+i)"/>
         </view>
     </scroll-view>
+
+        <uni-popup ref="previewPopup" type="center" :animation="false">
+            <view class="popup-content" @click="closePreviewPopup">
+              <image mode="aspectFit" v-if="nowDisplayItem.type === 'image'" :src="nowDisplayItem.filePath"></image>
+              <video controls object-fit="contain" muted v-if="nowDisplayItem.type === 'video'" :src="nowDisplayItem.filePath"></video>
+            </view>
+        </uni-popup>
     </view>
     <my-custom-tab-bar :index="1"/>
 </template>
@@ -42,6 +49,10 @@ import file from "@/api/file";
 // import forder from "../../components/folder/folder.vue"
 import {ref, unref} from 'vue'
 import {onLoad, onReady} from "@dcloudio/uni-app";
+import login from "@/api/login";
+import {showModal} from "@/utils/utils";
+import {uploadFile} from "@/api/upload";
+import eventBus from "@/utils/event-bus";
 
 let statusBar = ref({statusBarHeight: 1, navHeight: 1})
 
@@ -119,6 +130,12 @@ function getMoreList(){
 }
 onReady(() => {
   queryGetList()
+    eventBus.on('onUploadProgress', (response:any) => {
+        const res = response.res
+        console.log('上传进度' + response.progress);
+        console.log('已经上传的数据长度' + res.totalBytesSent);
+        console.log('预期需要上传的数据总长度' + res.totalBytesExpectedToSend);
+    })
 })
 
 const folderShowList = ref([
@@ -134,25 +151,36 @@ function goBackFolder(){
     queryGetList()
 }
 // 点击文件
+const previewPopup:any|null = ref(null), nowDisplayItem:any = ref()
+function closePreviewPopup(){
+    previewPopup.value.close()
+}
 let clickFile = (item: any) => {
   if (item.isNew) return false
     // completeAddFolder()
   if(isAddFolder.value) return false
-  switch (item.type) {
-    case 1: // 文件夹
-   // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
-        folderShowList.value.push({
-            label: item.fileName,
-            id: item.id
-        })
-        formQuery.value.page = 1
-        queryGetList()
-      break
-    case 2: // img
-      break
-    case 3: // video
-      break
-  }
+  const type = item.fullType?.split('/')[0]||''
+      switch (type) {
+        case 'folder': // 文件夹
+       // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
+            folderShowList.value.push({
+                label: item.fileName,
+                id: item.id
+            })
+            formQuery.value.page = 1
+            queryGetList()
+          break
+        case 'image': // img
+        case 'video': // video
+            previewPopup.value.open()
+            nowDisplayItem.value = {...item, type}
+          break
+      default:
+          uni.showToast({
+              title: '未知类型，暂不支持在线预览', icon: 'none'
+          })
+          break
+    }
 }
 
 // 顶部菜单
@@ -172,6 +200,7 @@ let editFileIndex = -1
  * 完成文件夹编辑
  */
 function completeAddFolder(){
+    closeMenu()
     if(!isAddFolder.value||editFileIndex === -1)return false
     uni.showLoading({title:'保存中'})
     file.addFolder({
@@ -192,7 +221,7 @@ function completeAddFolder(){
 }
 
 let closeMenu = () => {
-   completeAddFolder()
+   // completeAddFolder()
       if (showMenu.value) {
         menuHideIng.value = true
         setTimeout(() => {
@@ -214,14 +243,42 @@ let closeMenu = () => {
         case 0:
           break
         case 1:
-          fileList.value.unshift({id: -1, fileName: '新建文件夹', isNew: true})
+          fileList.value.unshift({id: -1, fileName: '新建文件夹', isNew: true,fullType:'folder'})
             editFileIndex = 0
           isAddFolder.value = true
           break
         case 2:
+            uploadFileFun()
           break
       }
     }
+
+function uploadFileFun(){
+    uni.chooseFile({
+        count: 9,
+        success: (res) => {
+            uni.showLoading({title:'正在上传',mask: true})
+            let filesList = res.tempFilePaths,tempFiles = res.tempFiles
+            if(filesList instanceof Array && tempFiles instanceof Array){
+                let files: UniApp.UploadFileOptionFiles[] | { name: string; uri: string; }[] = [],typeList:any=[]
+                filesList.forEach(item=>{
+                    files.push({name:'file',uri:item})
+                })
+
+                tempFiles.forEach((item:any)=>{
+                    typeList.push(item.type)
+                })
+                uploadFile(files, 'default' ,{folderId:folderShowList.value[folderShowList.value.length-1].id,typeList}).then((res:any)=>{
+                    // console.log(res.fileList)
+                    uni.hideLoading()
+                    queryGetList()
+                }).catch(()=>{
+                    showModal({content:'上传文件失败，请稍后再试',showCancel:false})
+                })
+            }
+        }
+    })
+}
 </script>
 
 <style scoped lang="scss">
@@ -394,5 +451,25 @@ justify-content: flex-start;
     align-items: center;
   }
 }
+}
+.popup-content{
+    width: 60vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    image{
+        width: 100%;
+    }
+    video{
+        width: 100%;
+        height: 40%;
+    }
+    @media screen and (max-width: 1024px) {
+        width: 750rpx;
+        image{
+            height: 80%;
+        }
+    }
 }
 </style>

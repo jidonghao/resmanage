@@ -1,7 +1,10 @@
 import baseUrl from "../../baseUrl";
+import eventBus from "@/utils/event-bus";
 
-export const uploadFile = (files: UniApp.UploadFileOptionFiles[]) => new Promise((resolve, reject) => {
-    const uploadTask = uni.uploadFile({
+export const uploadFile = (files: UniApp.UploadFileOptionFiles[], flag:'default'|'avatar',
+                           options:any) =>
+    new Promise((resolve, reject) => {
+    const uploadTask =  uni.uploadFile({
         url: baseUrl + "api/upload/upload",
         files,
         name: 'files',
@@ -9,7 +12,7 @@ export const uploadFile = (files: UniApp.UploadFileOptionFiles[]) => new Promise
             'authorization': uni.getStorageSync('authorization') || ''
         },
         formData: {
-            'user': 'test',
+            'user': 'test', flag, folderId:options.folderId||'', typeList:options.typeList||''
         },
         success: (uploadFileRes) => {
             const data = JSON.parse(uploadFileRes.data)
@@ -33,8 +36,6 @@ export const uploadFile = (files: UniApp.UploadFileOptionFiles[]) => new Promise
     });
 
     uploadTask.onProgressUpdate((res) => {
-        console.log('上传进度' + res.progress);
-        console.log('已经上传的数据长度' + res.totalBytesSent);
-        console.log('预期需要上传的数据总长度' + res.totalBytesExpectedToSend);
+        eventBus.emit('onUploadProgress', { res })
     });
 })

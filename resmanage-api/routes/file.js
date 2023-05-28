@@ -87,12 +87,12 @@ router.get('/query', (req, res, next) => {
  * }
  */
 router.post('/addFolder', (req, res, next) => {
-    let {folderName = ""} = req.body,
+    let {folderName = "",folderId= -1} = req.body,
         {id = ""} = req.data
     if (!folderName || !id) {
         res.json(resJson(601, '失败，参数错误'))
     } else {
-        file.addFolder(id, folderName).then(data => {
+        file.addFolder({userId:id, folderName, folderId}).then(data => {
             res.json(resJson(0, '成功', {id: data.insertId}))
         }).catch(err => {
             console.error("addFolder:", err)
@@ -100,6 +100,21 @@ router.post('/addFolder', (req, res, next) => {
         })
     }
 })
+
+// router.post('/addFile', (req, res, next) => {
+//     let {folderName = "",folderId= -1} = req.body,
+//         {id = ""} = req.data
+//     if (!folderName || !id) {
+//         res.json(resJson(601, '失败，参数错误'))
+//     } else {
+//         file.addFolder({userId:id, folderName, folderId}).then(data => {
+//             res.json(resJson(0, '成功', {id: data.insertId}))
+//         }).catch(err => {
+//             console.error("addFolder:", err)
+//             res.json(resJson(500, '系统内部错误'))
+//         })
+//     }
+// })
 
 
 export default router
