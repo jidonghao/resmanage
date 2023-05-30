@@ -7,17 +7,18 @@
     </view>
 
     <view v-if="determineFileType(props.fullType) === 'video' " class="folder-img-view">
-      <image class="isImg isVideo" mode="widthFix" :src="props.filePath+'?spm=qipa250&x-oss-process=video/snapshot,t_7000,f_jpg,w_800,h_600,m_fast'"/>
+      <image class="isImg isVideo" mode="widthFix"
+             :src="props.filePath+'?spm=qipa250&x-oss-process=video/snapshot,t_7000,f_jpg,w_800,h_600,m_fast'"/>
       <image class="videoStart" mode="widthFix" src="@/static/icon/start-white.svg"/>
     </view>
 
-      <image class="folder-img"
-             v-if="determineFileType(props.fullType) === '' "
-             src="@/static/icon/unknown-file.svg"/>
+    <image class="folder-img"
+           v-if="determineFileType(props.fullType) === '' "
+           src="@/static/icon/unknown-file.svg"/>
 
 
     <view v-if="!props.isNew" class="file--name">
-        {{ props.fileName.substring(0,30) }}
+      {{ props.fileName.substring(0, 30) }}
     </view>
 
 
@@ -25,12 +26,12 @@
               type="text" v-model="fileName" autofocus
               confirm-type="done" @input="fileNameChange" @focusout="completeEdit"/>
 
-      <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">
-          <view class="menu menu-view" @click.stop="false">
-              <view class="item">重命名</view>
-              <view class="item danger" @click="deleteFile">删除</view>
-          </view>
+    <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">
+      <view class="menu menu-view" @click.stop="false">
+        <view class="item">重命名</view>
+        <view class="item danger" @click="deleteFile">删除</view>
       </view>
+    </view>
   </view>
 </template>
 
@@ -38,49 +39,55 @@
 import {ref} from 'vue'
 
 const props = defineProps<{
-    id?: Number,index:Number|String, fileName: String,
-    imgPath?: String, videoPath?: String, isNew?: Boolean,
-    showMenu: Boolean,filePath:String,typeDetail:String,fullType:String|null
+  id?: Number, index: Number | String, fileName: String,
+  imgPath?: String, videoPath?: String, isNew?: Boolean,
+  showMenu: Boolean, filePath: String, typeDetail: String, fullType: String | null
 }>()
 const emit = defineEmits<{
-    onChange:(e: {  value:String,index:String|Number  })=>void,
-    completeAddFolder:()=>void,
-    closeMenu:()=>void,
+  onChange: (e: { value: String, index: String | Number }) => void,
+  completeAddFolder: () => void,
+  closeMenu: () => void,
 }>()
 const fileName = ref(props.fileName),
     showMenuFlag = ref(false)
-function deleteFile(){
+
+function deleteFile() {
 
 }
-function determineFileType(typeDetail:string|null){
-    let fileType = "";
-    if(!typeDetail){
-        fileType = ""
-    }else if(typeDetail==='folder'){
-        fileType = 'folder'
-    }else if (typeDetail.indexOf("image")!==-1) {
-        fileType = "image";
-    } else if (typeDetail.indexOf("video")!==-1) {
-        fileType = "video";
-    }
-    return fileType;
+
+function determineFileType(typeDetail: string | null) {
+  let fileType = "";
+  if (!typeDetail) {
+    fileType = ""
+  } else if (typeDetail === 'folder') {
+    fileType = 'folder'
+  } else if (typeDetail.indexOf("image") !== -1) {
+    fileType = "image";
+  } else if (typeDetail.indexOf("video") !== -1) {
+    fileType = "video";
+  }
+  return fileType;
 }
-function closeMenu(){
-    emit('closeMenu')
+
+function closeMenu() {
+  emit('closeMenu')
 }
-let showMenu = (e:any) => {
+
+let showMenu = (e: any) => {
   console.log(e)
   showMenuFlag.value = true
   e.preventDefault()
   return false
 }
-function completeEdit(e:any){
-    console.log(111)
-    emit('completeAddFolder')
+
+function completeEdit(e: any) {
+  console.log(111)
+  emit('completeAddFolder')
 }
-function fileNameChange(e:any){
-    console.log(e.detail.value,props.index)
-    emit('onChange',{value:e.detail.value,index:props.index})
+
+function fileNameChange(e: any) {
+  console.log(e.detail.value, props.index)
+  emit('onChange', {value: e.detail.value, index: props.index})
 }
 </script>
 
@@ -112,7 +119,8 @@ function fileNameChange(e:any){
   .folder-img-view {
     position: relative;
     width: 100%;
-    //height: 140upx;
+    max-height: 140upx;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,13 +147,15 @@ function fileNameChange(e:any){
   .file--name, .file-name-input {
     font-size: 26upx;
   }
-  .file--name{
+
+  .file--name {
     width: 180rpx;
-    display:inline-block;
+    display: inline-block;
     white-space: pre-wrap;
     word-wrap: break-word;
     height: auto;
   }
+
   .file-name-input {
     width: 180upx;
     padding: 6upx 12upx;
@@ -156,19 +166,21 @@ function fileNameChange(e:any){
     border-radius: 12upx;
   }
 
-  .menu-view{
+  .menu-view {
     width: 260upx;
     position: absolute;
     top: 60%;
 
-    .item{
+    .item {
       text-align: left;
     }
-    .danger{
+
+    .danger {
       color: var(--color-danger);
     }
   }
-  .folder-menu-back{
+
+  .folder-menu-back {
     width: 100vw;
     height: 100vh;
     background: rgba(30, 144, 255, 0.02);

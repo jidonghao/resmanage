@@ -8,8 +8,9 @@
             </view>
             <view class="rightControl" :class="{'scaleRightControl':folderShowList.length>1}">
                 <view class="searchInput">
-                    <uni-easyinput suffixIcon="search" type="text" v-model="searchValue" placeholder="搜索文件名" @iconClick.stop="search"
-                                   @confirm="search" ConfirmType="search"/>
+                  <uni-easyinput suffixIcon="search" type="text" v-model="formQuery.fileName" placeholder="搜索文件名"
+                                 @iconClick.stop="search" @confirm="search" confirm-type="search"/>
+
                 </view>
                 <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
                     <view v-for="i in 3" :key="i"/>
@@ -27,6 +28,7 @@
                  refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
                  @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
         <view class="scroll-container">
+          <IsEmpty v-if="fileList.length===0">暂无数据</IsEmpty>
             <folder v-for="(item,i) in fileList" :index="i" :filePath="item.filePath" :typeDetail="item.typeDetail"
                     :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName" :showMenu="item.showMenu"
                     :fullType="item.fullType" @click.stop="clickFile(item)"  @longpress.stop="showFileMenu($event,item,+i)"
@@ -53,6 +55,7 @@ import login from "@/api/login";
 import {showModal} from "@/utils/utils";
 import {uploadFile} from "@/api/upload";
 import eventBus from "@/utils/event-bus";
+import IsEmpty from "@/components/isEmpty/isEmpty.vue";
 
 let statusBar = ref({statusBarHeight: 1, navHeight: 1})
 
@@ -187,7 +190,8 @@ let clickFile = (item: any) => {
 let showMenu = ref(false), menuHideIng = ref(false)
 let searchValue = ref(""),
     search = () => {
-
+      formQuery.value.page = 1
+      queryGetList()
     }
 const topMenuOptions = ref([
   {label: "选择", value: 0},
