@@ -5,7 +5,7 @@ import {resJson} from "../index.js";
 import {smsSend} from "../sms/sms.js";
 import {getKey, setKey} from "../redis/index.js";
 import sql from "../sql/sql.js";
-
+import logger from "../logs/index.js"
 const router = express.Router();
 
 /**
@@ -149,6 +149,7 @@ router.post('/loginByCode', (req, res, next) => {
         return login.createUser(phoneNumber, userName)
     }).then(data => {
         console.log("创建一个新用户：", phoneNumber, data.insertId)
+        logger.info(`--------------\n创建一个新用户：\n, ${phoneNumber}, ${data.insertId}\n\n`)
         setToken(phoneNumber, data.insertId).then((data) => {
             res.json(resJson(0, '登录成功', {
                 token: data,
@@ -164,9 +165,11 @@ router.post('/loginByCode', (req, res, next) => {
             }));
         }).catch(err => {
             console.log("通过验证码登录setToken错误：", err)
+            logger.error(`"通过验证码登录setToken错误：", ${JSON.stringify(err)}`)
         })
     }).catch(err => {
         console.error("通过验证码登录错误：", err)
+        logger.error(`"通过验证码登录错误：", ${JSON.stringify(err)}`)
         res.json(resJson(500, '系统内部错误'))
     })
 })
@@ -210,7 +213,7 @@ router.post('/getCode', (req, res, next) => {
 
     getKey(phoneNumber).then(value => {
         if (value) {
-            res.json(resJson(603, '系统检测到异常行为，已被拦截。'))
+            res.json(resJson(603, '已发送短信验证码，请勿重复获取，注意查收'))
             return Promise.reject("系统中存在对应验证码，属重复请求，已拒绝")
         } else {
             return Promise.resolve()
@@ -218,24 +221,25 @@ router.post('/getCode', (req, res, next) => {
     }).then(() => {
         let code = getCode()
         //测试代码
-        setKey(phoneNumber, code).then(() => {
-            res.json(resJson(0, '成功', {code}))
-        }).catch(err => {
-            console.error("发送验证码错误：", err)
-            res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
-        })
-
-        // /**
-        //  * 调用发送短信
-        //  */
-        // smsSend(phoneNumber, code).then(() => {
-        //     return setKey(phoneNumber, code)
-        // }).then(() => {
-        //     res.json(resJson(0, '成功'))
+        // setKey(phoneNumber, code).then(() => {
+        //     res.json(resJson(0, '成功', {code}))
         // }).catch(err => {
         //     console.error("发送验证码错误：", err)
         //     res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
         // })
+
+        /**
+         * 调用发送短信
+         */
+        smsSend(phoneNumber, code).then(() => {
+            return setKey(phoneNumber, code)
+        }).then(() => {
+            res.json(resJson(0, '成功'))
+        }).catch(err => {
+            console.error("发送验证码错误：", err)
+            res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
+            logger.error(`"发送验证码错误：", ${JSON.stringify(err)}`)
+        })
     }).catch(err => {
         console.error("redis ERROR：", err)
     })
@@ -259,6 +263,7 @@ router.post('/changePasswd', (req, res, next) => {
             res.json(resJson(603, '原密码错误，请重新输入'))
         } else {
             console.error("修改密码错误：", err)
+            logger.error(`"修改密码错误：", ${JSON.stringify(err)}`)
             res.json(resJson(500, '系统内部错误'))
         }
     })
@@ -268,11 +273,11 @@ router.post('/changeNumber', (req, res) => {
     let {phoneNumber, code} = req.body;
     let {id = ''} = req.data
     if (!phoneNumber || !code || !id) {
-        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
+        res.json(resJson(601, '系统检测到异常行为，已拦截。'))
         return false
     }
     if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
-        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+        res.json(resJson(602, '系统检测到异常行为，已拦截。'))
         return false
     }
 
@@ -290,10 +295,12 @@ router.post('/changeNumber', (req, res) => {
         }).catch(err => {
             res.json(resJson(500, '系统内部错误'))
             console.error("修改手机号SQL出错：", err)
+            logger.error(`"修改手机号SQL出错：", ${JSON.stringify(err)}`)
         })
     }).catch(err => {
         res.json(resJson(500, '系统内部错误'))
         console.error("修改手机号出错：", err)
+        logger.error(`"修改手机号出错：", ${JSON.stringify(err)}`)
     })
 
 })
@@ -310,6 +317,7 @@ router.post('/changeNickname', (req, res) => {
     }).catch(err => {
         res.json(resJson(500, '系统内部错误'))
         console.error("修改昵称SQL错误：", err)
+        logger.error(`"修改昵称SQL错误：", ${JSON.stringify(err)}`)
     })
 })
 router.post('/changeAvatar', (req, res) => {
@@ -324,6 +332,7 @@ router.post('/changeAvatar', (req, res) => {
     }).catch(err => {
         res.json(resJson(500, '系统内部错误'))
         console.error("修改头像SQL错误：", err)
+        logger.error(`"修改头像SQL错误：", ${JSON.stringify(err)}`)
     })
 })
 export default router

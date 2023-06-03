@@ -1,6 +1,7 @@
 import file from "../sql/query/file.js";
 import {resJson} from "../index.js";
 import express from "express";
+import logger from "../logs/index.js";
 const router = express.Router();
 /**
  * @api {GET} /api/file/query 获取文件列表
@@ -59,6 +60,8 @@ router.get('/query', (req, res, next) => {
         }).catch(err => {
             console.error("getFolder:", err)
             res.json(resJson(500, '系统内部错误'))
+            logger.error(`"错误getFolder：", ${JSON.stringify(err)}`)
+
         })
     } else {
         res.json(resJson(-1, '失败，没有找到指定用户'))
@@ -97,6 +100,8 @@ router.post('/addFolder', (req, res, next) => {
         }).catch(err => {
             console.error("addFolder:", err)
             res.json(resJson(500, '系统内部错误'))
+            logger.error(`"错误addFolder：", ${JSON.stringify(err)}`)
+
         })
     }
 })
@@ -152,6 +157,8 @@ router.post('/addLabel', (req, res, next) => {
             .catch(err => {
                 console.error("addLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误addLabel：", ${JSON.stringify(err)}`)
+
             });
     }
 });
@@ -191,6 +198,8 @@ router.post('/removeLabel', (req, res, next) => {
             .catch(err => {
                 console.error("removeLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误removeLabel：", ${JSON.stringify(err)}`)
+
             });
     }
 });
@@ -227,6 +236,8 @@ router.post('/addNewLabel', (req, res, next) => {
             .catch(err => {
                 console.error("addNewLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误addNewLabel：", ${JSON.stringify(err)}`)
+
             });
     }
 });
@@ -265,6 +276,7 @@ router.post('/deleteLabel', (req, res, next) => {
             .catch(err => {
                 console.error("deleteLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误deleteLabel：", ${JSON.stringify(err)}`)
             });
     }
 });
@@ -294,6 +306,7 @@ router.get('/getLabels', (req, res, next) => {
             .catch(err => {
                 console.error("getLabels:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误getLabels：", ${JSON.stringify(err)}`)
             });
     }
 });
@@ -330,6 +343,8 @@ router.get('/getFilesByLabel', (req, res, next) => {
             .catch(err => {
                 console.error("getFilesByLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误getFilesByLabel：", ${JSON.stringify(err)}`)
+
             });
     }
 });
@@ -366,6 +381,8 @@ router.post('/updateQueryTime', (req, res, next) => {
             .catch(err => {
                 console.error("updateQueryTime:", err);
                 res.json(resJson(500, '系统内部错误'));
+                logger.error(`"错误updateQueryTime：", ${JSON.stringify(err)}`)
+
             });
     }
 });
@@ -404,6 +421,8 @@ router.get('/getRecentlyViewedFiles', (req, res, next) => {
         }).catch(err => {
             console.error("getRecentlyViewedFiles:", err);
             res.json(resJson(500, '系统内部错误'));
+            logger.error(`"错误getRecentlyViewedFiles：", ${JSON.stringify(err)}`)
+
         })
     } else {
         res.json(resJson(-1, '失败，没有找到指定用户'));
@@ -431,6 +450,7 @@ router.post('/removeAllQueryTimes', (req, res, next) => {
         }).catch(err => {
             console.error("removeAllQueryTimes:", err);
             res.json(resJson(500, '系统内部错误'));
+            logger.error(`"错误removeAllQueryTimes：", ${JSON.stringify(err)}`)
         });
     } else {
         res.json(resJson(-1, '失败，没有找到指定用户'));
@@ -468,6 +488,7 @@ router.post('/updateFileName', (req, res, next) => {
         }).catch(err => {
             console.error("updateFileName:", err);
             res.json(resJson(500, '系统内部错误'));
+            logger.error(`"错误updateFileName：", ${JSON.stringify(err)}`)
         })
     } else {
         res.json(resJson(601, '失败，参数错误'));
@@ -504,6 +525,7 @@ router.post('/deleteFile', (req, res, next) => {
         }).catch(err => {
             console.error("deleteFile:", err);
             res.json(resJson(500, '系统内部错误'));
+            logger.error(`"错误deleteFile：", ${JSON.stringify(err)}`)
         });
     }
 });

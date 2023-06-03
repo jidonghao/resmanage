@@ -8,8 +8,8 @@
       </view>
       <image class="arrowImg" src="@/static/icon/in-arrow.svg"/>
     </view>
-    <arrow-list title="设置"/>
-    <arrow-list title="关于"/>
+<!--    <arrow-list title="设置"/>-->
+<!--    <arrow-list title="关于"/>-->
   </view>
     <my-custom-tab-bar :index="2"/>
 </template>

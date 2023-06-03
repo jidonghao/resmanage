@@ -8,6 +8,7 @@ import OSS from 'ali-oss'
 import multer from "multer";
 
 import ENV from "../config/index.js"
+import logger from "../logs/index.js";
 
 const client = new OSS({
     region: ENV.OSS_REGION,
@@ -32,6 +33,7 @@ const putFile2Ali = (fileName, filePath) => new Promise((resolve, reject) => {
         resolve(res.url)
     }).catch(err => {
         console.error("上传到阿里云失败", err)
+        logger.error(`"上传到阿里云失败：", ${JSON.stringify(err)}`)
         reject(err)
     })
 })
@@ -67,6 +69,7 @@ router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req,
                     fileList[fileList.length-1].id = sqlBack.insertId
                 }catch (e) {
                     console.error("上传文件添加到数据库失败：", e)
+                    logger.error(`"上传文件添加到数据库失败：", ${JSON.stringify(e)}`)
                 }
             }
         }, undefined);
@@ -74,6 +77,7 @@ router.post('/upload', multer({dest: 'uploadFiles/'}).array('file'), async (req,
     } catch (e) {
         console.error("上传文件失败foreach：", e)
         res.json(resJson(500, '系统内部错误'))
+        logger.error(`"上传文件失败foreach：", ${JSON.stringify(e)}`)
         return false
     }
 })

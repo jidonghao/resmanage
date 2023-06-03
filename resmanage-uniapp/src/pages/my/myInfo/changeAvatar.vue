@@ -11,13 +11,12 @@
 </template>
 
 <script setup lang="ts">
-// #ifdef H5
 import {ref} from "vue";
 import {onLoad, onShow} from "@dcloudio/uni-app";
 import {uploadFile} from "@/api/upload";
 import login from "@/api/login"
 import {showModal} from "@/utils/utils";
-
+// #ifdef H5
 document.body.style.overflow = 'hidden'
 // #endif
 
@@ -46,13 +45,14 @@ let chooseImg = () => {
         filesList.forEach(item=>{
           files.push({name:'file',uri:item})
         })
+          console.log(files)
         uploadFile(files,'avatar',{}).then((res:any)=>{
           console.log(res.fileList[0])
           login.changeAvatar({avatar:res.fileList[0]}).then(() => {
-            avatar.value =  res.fileList[0]
+            avatar.value =  res.fileList[0].url
             showModal({title: "提示", content: "更换成功", showCancel: false}).then(() => {
               let userInfo = uni.getStorageSync("userInfo")
-              userInfo.avatar = res.fileList[0]
+              userInfo.avatar = res.fileList[0].url
               uni.setStorageSync("userInfo", userInfo)
               uni.navigateBack()
             })
@@ -133,7 +133,8 @@ let showMenu = () => {
   align-items: center;
 
   .avatar {
-    width: 100%;
+    width: 750rpx;
+
   }
 }
 

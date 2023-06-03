@@ -1,4 +1,5 @@
 <template>
+    <view class="container-login">
   <view class="selectUse">
     <view :class="{'useSelect':useSelect===1}" @click="useSelect=1">手机号登录</view>
     <view class="vBar">|</view>
@@ -33,6 +34,7 @@
     </uni-forms>
   </view>
   <button @click="login" class="login">登录</button>
+    </view>
 </template>
 
 <script setup lang="ts">
@@ -96,10 +98,10 @@ let getCaptcha = () => {
   // 获取验证码
 
   let captchaTimeStorage = +uni.getStorageSync('captchaTime') || null
-  if (captchaTimeStorage && new Date().getTime() - captchaTimeStorage < 300000) {
-    uni.showModal({title: "错误", content: "非法操作，已拦截", showCancel: false})
-    return false
-  }
+  // if (captchaTimeStorage && new Date().getTime() - captchaTimeStorage < 300000) {
+  //   uni.showModal({title: "错误", content: "非法操作，已拦截", showCancel: false})
+  //   return false
+  // }
   loginApi.getCode({phoneNumber: formData.value.phoneNumber}).then(() => {
     uni.showToast({title: '成功发送', icon: 'success'})
     captchaDis.value = true
@@ -177,7 +179,7 @@ let login = () => {
   user-select: none;
   padding: 120upx 0 80upx;
   display: flex;
-  width: 100vw;
+  width:100%;
   align-items: center;
   justify-content: center;
   font-size: 32upx;
@@ -196,5 +198,9 @@ let login = () => {
   margin: 0 30upx;
   background: #007aff;
   color: white;
+}
+.container-login{
+  width: 750rpx;
+  margin: 0 auto;
 }
 </style>
