@@ -5,7 +5,8 @@
       "path": "pages/recent/recent",
       "style": {
         "navigationBarTitleText": "最近项目",
-        "enablePullDownRefresh": false
+        "enablePullDownRefresh": false,
+        "navigationStyle": "custom"
       }
     },
     {

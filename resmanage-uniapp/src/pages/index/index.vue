@@ -29,11 +29,36 @@
                  @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
         <view class="scroll-container">
           <IsEmpty v-if="fileList.length===0">暂无数据</IsEmpty>
-            <folder v-for="(item,i) in fileList" :index="i" :filePath="item.filePath" :typeDetail="item.typeDetail"
-                    :key="item.id" :id="item.id" :isNew="item.isNew" :fileName="item.fileName" :showMenu="item.showMenu"
-                    :fullType="item.fullType" @click.stop="clickFile(item)"  @longpress.stop="showFileMenu($event,item,+i)"
-                    @onChange="fileDetailChange" @completeAddFolder="completeAddFolder" @closeMenu="closeFileMenu($event,item,+i)"/>
+            <folder
+                v-for="(item, i) in fileList"
+                :index="i"
+                :filePath="item.filePath"
+                :typeDetail="item.typeDetail"
+                :key="item.id"
+                :id="item.id"
+                :isNew="item.isNew"
+                :fileName="item.fileName"
+                :showMenu="item.showMenu"
+                :fullType="item.fullType"
+                @click.stop="clickFile($event, item)"
+                @touchstart.stop="touchStart($event, item, i)"
+                @touchend.stop="touchEnd"
+                @touchmove.stop="touchMove"
+                @onChange="fileDetailChange"
+                @completeAddFolder="completeAddFolder"
+                @closeMenu="closeFileMenu"
+                @completeEditFile="completeEditFile"
+                @contextmenu.prevent="showFileMenu($event, item, i)"
+            />
         </view>
+            <view class="folder-menu-back" v-if="showFileMenuShow" @click="closeFileMenu">
+              <view class="menu menu-view" @click.stop="false"  @click="fileMenuFun"
+                    :style="`top:${fileMenuPlace.y}px;left:${fileMenuPlace.x}px`">
+                <view class="item" data-action='rename'>重命名</view>
+<!--                <view class="item" data-action='label'>标签</view>-->
+                <view class="item danger" data-action='del'>删除</view>
+              </view>
+            </view>
     </scroll-view>
 
         <uni-popup ref="previewPopup" type="center" :animation="false">
@@ -100,19 +125,98 @@ let formQuery = ref({
           refreshing.value=false
       })
     }
-const enableScroll = ref(true)
-function showFileMenu(event:Event,item:any,i:number){
-    fileList.value[i].showMenu = true
+const enableScroll = ref(true),
+    showFileMenuShow = ref(false),
+    fileMenuPlace = ref({x:0,y:0}),selectItemIndex = ref(-1)
+
+function fileMenuFun(e:any){
+    if(selectItemIndex.value === -1) return false
+
+    const action = e.target.dataset.action;
+    showFileMenuShow.value = false
+    switch(action) {
+        case 'rename':
+            // 执行重命名操作
+            fileList.value[selectItemIndex.value].isNew = true
+            isAddFolder.value = true
+            closeFileMenu()
+            break;
+        case 'label':
+
+            break
+        case 'del':
+            // 执行删除操作
+            showModal({title:'提示',content:'确定要删除吗？'}).then(()=>{
+                file.deleteFile({fileId: fileList.value[selectItemIndex.value].id}).then(()=>{
+                    uni.showToast({title:'删除'})
+                    fileList.value.splice(selectItemIndex.value,1)
+                }).catch((err:any)=>{
+                    showModal({content:err.errMsg||'操作失败，请稍后重试',}).then(()=>{})
+                })
+
+            })
+            break;
+        default:
+            // 其他情况
+            break;
+    }
+}
+function completeEditFile(){
+    if(!fileList.value[selectItemIndex.value].fileName){
+        showModal({content:'文件名不能为空',showCancel:false}).then(()=>{
+
+        })
+    }
+    file.updateFileName({
+        fileId:fileList.value[selectItemIndex.value].id,
+        fileName:fileList.value[selectItemIndex.value].fileName
+    }).then(()=>{
+        uni.showToast({title:'修改成功'})
+        fileList.value[selectItemIndex.value].isNew = false
+    }).catch((err:any)=>{
+        showModal({content:err.errMsg||'操作失败，请稍后重试',}).then(()=>{})
+    })
+}
+
+function showFileMenu(event:any,item:any,i:number,longPress?:string){
+    if(selectItemIndex.value!==-1&&fileList.value[selectItemIndex.value].id)
+        fileList.value[selectItemIndex.value].isNew = false
+
+    selectItemIndex.value = i
+    let x, y;
+    if(longPress){
+        x = event.changedTouches[0].clientX ||0;
+        y = event.changedTouches[0].clientY-30||0;
+        // 检查菜单是否会超出窗口的右边缘
+        const menuWidth = 240; // 这里设置你的菜单的宽度
+
+        if (x + menuWidth > window.innerWidth) {
+            x = window.innerWidth - menuWidth;
+        }
+    }else{
+        x = event.pageX-50||0;
+        y = event.pageY-30||0;
+        // 检查菜单是否会超出窗口的右边缘
+        const menuWidth = 320; // 这里设置你的菜单的宽度
+
+        if (x + menuWidth > window.innerWidth) {
+            x = window.innerWidth - menuWidth;
+        }
+    }
+
+    fileMenuPlace.value = {
+        x,
+        y
+    }
+    showFileMenuShow.value = true
     enableScroll.value = false
-    // isAddFolder.value = true
-    // console.log(event.target.)
     event.preventDefault()
     return false
 }
-function closeFileMenu(event:Event,item:any,i:number){
-    fileList.value[i].showMenu = false
+
+function closeFileMenu(event?:any){
+    showFileMenuShow.value = false
     enableScroll.value = true
-    event.preventDefault()
     return false
 }
 
@@ -153,12 +257,32 @@ function goBackFolder(){
     formQuery.value.folderId = folderShowList.value[  folderShowList.value.length-1].id
     queryGetList()
 }
+
+const timer = ref<any>(null);
+const isLongPress = ref(false);
+
+const touchStart = (event:any, item:any, i:number) => {
+    isLongPress.value = false;
+    timer.value = setTimeout(() => {
+        isLongPress.value = true;
+        showFileMenu(event, item, i, 'longpress');
+    }, 600);
+};
+
+const touchEnd = () => {
+    clearTimeout(timer.value);
+};
+
+const touchMove = () => {
+    clearTimeout(timer.value);
+};
 // 点击文件
 const previewPopup:any|null = ref(null), nowDisplayItem:any = ref()
 function closePreviewPopup(){
     previewPopup.value.close()
 }
-let clickFile = (item: any) => {
+let clickFile = (event:any,item: any) => {
+    if(isLongPress.value) return false
   if (item.isNew) return false
     // completeAddFolder()
   if(isAddFolder.value) return false
@@ -180,7 +304,7 @@ let clickFile = (item: any) => {
           break
       default:
           uni.showToast({
-              title: '未知类型，暂不支持在线预览', icon: 'none'
+              title: '该文件类型暂不支持在线预览', icon: 'none'
           })
           break
     }
@@ -194,7 +318,7 @@ let searchValue = ref(""),
       queryGetList()
     }
 const topMenuOptions = ref([
-  {label: "选择", value: 0},
+  // {label: "选择", value: 0},
   {label: "新建文件夹", value: 1},
   {label: "上传文件", value: 2, hideBorder: true}
 ])
@@ -225,6 +349,10 @@ function completeAddFolder(){
 }
 
 let closeMenu = () => {
+    if(selectItemIndex.value!==-1&&fileList.value[selectItemIndex.value]?.id){
+        isAddFolder.value = false
+        fileList.value[selectItemIndex.value].isNew = false
+    }
    // completeAddFolder()
       if (showMenu.value) {
         menuHideIng.value = true
@@ -311,14 +439,14 @@ function uploadFileFun(){
 
 .nav-style {
   position: fixed;
-  background: #f5f5f5;
-  width: 100vw;
-  display: flex;
-  z-index: 998;
-  justify-content: space-between;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 0 12upx;
+    background: #f5f5f5;
+    width: 100vw;
+    display: flex;
+    z-index: 998;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 12upx;
 
     @media screen and (min-width: 1023px) {
         width: calc(100vw - 60px);
@@ -474,6 +602,28 @@ justify-content: flex-start;
         image{
             height: 80%;
         }
+    }
+}
+.folder-menu-back {
+    width: 100vw;
+    height: 100vh;
+    //background: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.menu-view {
+    width: 260upx;
+    position: absolute;
+    //top: 60%;
+
+    .item {
+        text-align: left;
+    }
+
+    .danger {
+        color: var(--color-danger);
     }
 }
 </style>

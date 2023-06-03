@@ -26,12 +26,12 @@
               type="text" v-model="fileName" autofocus
               confirm-type="done" @input="fileNameChange" @focusout="completeEdit"/>
 
-    <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">
-      <view class="menu menu-view" @click.stop="false">
-        <view class="item">重命名</view>
-        <view class="item danger" @click="deleteFile">删除</view>
-      </view>
-    </view>
+<!--    <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">-->
+<!--      <view class="menu menu-view" @click.stop="false">-->
+<!--        <view class="item">重命名</view>-->
+<!--        <view class="item danger" @click="deleteFile">删除</view>-->
+<!--      </view>-->
+<!--    </view>-->
   </view>
 </template>
 
@@ -45,7 +45,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   onChange: (e: { value: String, index: String | Number }) => void,
-  completeAddFolder: () => void,
+  completeAddFolder: () => void, completeEditFile:()=>void,
   closeMenu: () => void,
 }>()
 const fileName = ref(props.fileName),
@@ -73,16 +73,19 @@ function closeMenu() {
   emit('closeMenu')
 }
 
-let showMenu = (e: any) => {
-  console.log(e)
-  showMenuFlag.value = true
-  e.preventDefault()
-  return false
-}
+// let showMenu = (e: any) => {
+//   console.log(e)
+//   showMenuFlag.value = true
+//   e.preventDefault()
+//   return false
+// }
 
 function completeEdit(e: any) {
   console.log(111)
-  emit('completeAddFolder')
+  if(props.id)
+      emit('completeEditFile')
+  else
+    emit('completeAddFolder')
 }
 
 function fileNameChange(e: any) {
@@ -180,14 +183,5 @@ function fileNameChange(e: any) {
     }
   }
 
-  .folder-menu-back {
-    width: 100vw;
-    height: 100vh;
-    background: rgba(30, 144, 255, 0.02);
-    overflow: hidden;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
 }
 </style>
