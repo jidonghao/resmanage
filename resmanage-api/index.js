@@ -58,6 +58,7 @@ app.use(expressJwt({secret: signKey, algorithms: ['HS256']}).unless({
         '/api/user/login',
         '/api/user/getCode',
         '/api/user/loginByCode',
+        '/api/user/register',
         '/apidoc',
         /^((?!\/api).)*$/ // 匹配所有非 /api 开头的路径
     ]
@@ -79,7 +80,7 @@ app.use("/api", router)
 app.use("*", (req, res, next) => {
     res.status(404).json(resJson(404, "接口不存在", {path: req._parsedUrl.path}))
 })
-app.listen(8080, () => {
-    console.log(chalk.blue("\n服务已经启动，8080端口监听中..."))
+app.listen(8081, () => {
+    console.log(chalk.blue("\n服务已经启动，8081端口监听中..."))
 })
 

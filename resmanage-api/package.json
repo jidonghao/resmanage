@@ -7,7 +7,7 @@
   "author": "jidonghao <ji534@outlook.com>",
   "scripts": {
     "dev": "cross-env NODE_ENV=dev nodemon ./index.js",
-    "prd": "cross-env NODE_ENV=production nodemon ./index.js",
+    "prd": "cross-env NODE_ENV=production pm2 start ./index.js --name res-api",
     "getDoc": "apiDoc -i ./routes/ -o apiDoc/"
   },
   "dependencies": {
@@ -16,6 +16,7 @@
     "body-parser": "^1.20.0",
     "chalk": "^5.2.0",
     "cross-env": "^7.0.3",
+    "crypto-js": "^4.1.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.1",
     "express-jwt": "6.1.1",

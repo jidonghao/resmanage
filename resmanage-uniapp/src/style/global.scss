@@ -46,22 +46,6 @@
   }
 }
 
-.uni-tabbar {
-  background-color: transparent !important;
-  .uni-tabbar-border {
-    background-color: #e54d42 !important;
-  }
-  .uni-tabbar__item {
-    height: 100rpx !important;
-    @media screen and (min-width: 1023px) {
-      padding-bottom: 48rpx;
-    }
-    .uni-tabbar__icon {
-      width: 40rpx !important;
-      height: 40rpx !important;
-    }
-  }
-}
 
 .global--container{
 

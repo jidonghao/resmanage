@@ -48,7 +48,7 @@ let chooseImg = () => {
           console.log(files)
         uploadFile(files,'avatar',{}).then((res:any)=>{
           console.log(res.fileList[0])
-          login.changeAvatar({avatar:res.fileList[0]}).then(() => {
+          login.changeAvatar({avatar:res.fileList[0].url}).then(() => {
             avatar.value =  res.fileList[0].url
             showModal({title: "提示", content: "更换成功", showCancel: false}).then(() => {
               let userInfo = uni.getStorageSync("userInfo")

@@ -2,11 +2,55 @@ import express from "express";
 import login from "../sql/query/login.js";
 import {setToken} from "../tools/token.js";
 import {resJson} from "../index.js";
-import {smsSend} from "../sms/sms.js";
-import {getKey, setKey} from "../redis/index.js";
-import sql from "../sql/sql.js";
+// import {smsSend} from "../sms/sms.js";
+// import {getKey, setKey} from "../redis/index.js";
 import logger from "../logs/index.js"
 const router = express.Router();
+import CryptoJS from "crypto-js";
+import ENV from "../config/index.js"
+
+
+/**
+ * @api {POST} /api/user/register 注册
+ * @apiGroup user
+ * @apiDescription 用于用户注册
+ * @apiVersion 1.0.0
+ * @author openai gpt-3.5-turbo 20230323
+ */
+router.post('/register', async (req, res, next) => {
+    let {passwd, username, nickname} = req.body;
+    if (!username ||!passwd || !nickname ) {
+        res.json(resJson(601, '参数不对'))
+    } else if (passwd.length < 6 || passwd.length > 20|| username.length < 1 || username.length > 20) { //
+        res.json(resJson(600, 'error'))
+    } else {
+        try {
+            passwd = CryptoJS.AES.encrypt(passwd, ENV.PASSWORD_KEY).toString()
+            let sqlBack = await login.createUser( username, nickname, passwd);
+            setToken(username, sqlBack.insertId).then(async (data) => {
+                res.json(resJson(0, '登录成功', {
+                    token: data,
+                    params: ['./*', '*', '&^%$'],
+                    info: {
+                        nickName: nickname,
+                        userName: username,
+                        hasPasswd: true,
+                        avatar:ENV.DEFAULT_AVATAR
+                    }
+                }));
+            }).catch((e) => {
+                res.status(400).json(resJson(500, '系统繁忙，请稍后重试'));
+                console.log("用户注册错误？：：", e)
+                logger.error(`用户注册后免登陆设置token/清空验证码错误：${JSON.stringify(e)}`)
+            })
+        } catch (err) {
+            res.status(400).json(resJson(500, 'error'));
+            console.error("从redis通过手机号获取验证码错误(几乎不会错误，除非redis)：", err);
+            logger.error(`从redis通过手机号获取验证码错误(几乎不会错误，除非redis)：${JSON.stringify(err)}`)
+        }
+    }
+});
+
 
 /**
  * @api {POST} /api/user/login 登录
@@ -41,25 +85,26 @@ const router = express.Router();
  * }
  */
 router.post('/login', (req, res, next) => {
-    let {phoneNumber, passwd} = req.body;
-    if (!phoneNumber && !passwd) {
+    let {user, passwd} = req.body;
+    if (!user && !passwd) {
         res.json(resJson(601, '参数不对'))
-    } else if (phoneNumber.length !== 11 || passwd.length < 6 || passwd.length > 20) {
-        res.json(resJson(600, '手机号或密码错误'))
+    } else if (!user || passwd.length < 6 || passwd.length > 20) {
+        res.json(resJson(600, '账号或密码错误'))
     } else {
-        login.queryByPhoneNumber(phoneNumber, passwd).then(data => {
-            let sqlBack = data[0]
-            if (passwd === sqlBack?.passwd && phoneNumber === sqlBack?.phone_number) {
-                setToken(sqlBack?.phone_number, sqlBack?.id).then((data) => {
+        login.queryByUsername(user, passwd).then(data => {
+            let sqlBack = data[0],
+                password = CryptoJS.AES.decrypt(sqlBack?.passwd, ENV.PASSWORD_KEY).toString(CryptoJS.enc.Utf8) + ''
+            if (passwd === password && user === sqlBack?.username) {
+                setToken(sqlBack?.user, sqlBack?.id).then((data) => {
                     res.json(resJson(0, '登录成功', {
                         token: data,
                         params: ['./*', '*', '&^%$'],
                         info: {
-                            phoneNumber: sqlBack?.phone_number,
+                            user: sqlBack?.user,
                             nickName: sqlBack?.nick_name,
                             identity: sqlBack?.identity,
                             avatar: sqlBack?.avatar,
-                            hasPasswd: !!sqlBack?.passwd
+                            hasPasswd: true
                         }
                     }));
                 })
@@ -106,48 +151,55 @@ router.post('/login', (req, res, next) => {
  *   isNew?:Boolean
  * }
  */
-router.post('/loginByCode', (req, res, next) => {
-    let {phoneNumber, code, invitationCode} = req.body, userName = ""
-    // if (invitationCode !== "DHXT2023") {
-    //     res.json(resJson(601, '邀请码错误'))
-    //     return false
-    // }
-    getKey(phoneNumber).then(value => {
-        if (code === value) {
-            return Promise.resolve()
-        } else {
-            res.json(resJson(601, '验证码错误'))
-            return Promise.reject("验证码错误")
-        }
-    }).then(() => {
-        return login.queryByPhoneNumber(phoneNumber).then(data => {
-            let sqlBack = data[0]
-            if (sqlBack) {
-                setToken(sqlBack?.phone_number, sqlBack?.id).then((data) => {
-                    res.json(resJson(0, '登录成功', {
-                        token: data,
-                        params: ['./*', '*', '&^%$'],
-                        info: {
-                            phoneNumber: sqlBack?.phone_number,
-                            nickName: sqlBack?.nick_name,
-                            identity: sqlBack?.identity,
-                            avatar: sqlBack?.avatar,
-                            hasPasswd: !!sqlBack?.passwd
-                        }
-                    }));
-                })
-                return new Promise(() => {
-                }) // 已完成 结束
-            } else {
-                return Promise.resolve(1)   // 无该用户 去创建
-            }
-        }).catch(err => {
-            console.error("通过验证码登录sql错误：", err)
-        })
-    }).then(() => {
-        userName = `用户_${Math.floor(Math.random() * 100000000)}`
-        return login.createUser(phoneNumber, userName)
-    }).then(data => {
+// router.post('/loginByCode', (req, res, next) => {
+//     let {phoneNumber, code, invitationCode} = req.body, userName = ""
+//     // if (invitationCode !== "DHXT2023") {
+//     //     res.json(resJson(601, '邀请码错误'))
+//     //     return false
+//     // }
+//     getKey(phoneNumber).then(value => {
+//         if (code === value) {
+//             return Promise.resolve()
+//         } else {
+//             res.json(resJson(601, '验证码错误'))
+//             return Promise.reject("验证码错误")
+//         }
+//     }).then(() => {
+//         return login.queryByPhoneNumber(phoneNumber).then(data => {
+//             let sqlBack = data[0]
+//             if (sqlBack) {
+//                 setToken(sqlBack?.phone_number, sqlBack?.id).then((data) => {
+//                     res.json(resJson(0, '登录成功', {
+//                         token: data,
+//                         params: ['./*', '*', '&^%$'],
+//                         info: {
+//                             phoneNumber: sqlBack?.phone_number,
+//                             nickName: sqlBack?.nick_name,
+//                             identity: sqlBack?.identity,
+//                             avatar: sqlBack?.avatar,
+//                             hasPasswd: !!sqlBack?.passwd
+//                         }
+//                     }));
+//                 })
+//                 return new Promise(() => {
+//                 }) // 已完成 结束
+//             } else {
+//                 return Promise.resolve(1)   // 无该用户 去创建
+//             }
+//         }).catch(err => {
+//             console.error("通过验证码登录sql错误：", err)
+//         })
+//     }).then(() => {
+//         userName = `用户_${Math.floor(Math.random() * 100000000)}`
+//         createUser({phoneNumber, userName},res)
+//     }).catch(err => {
+//         console.error("通过验证码登录错误：", err)
+//         logger.error(`"通过验证码登录错误：", ${JSON.stringify(err)}`)
+//         res.json(resJson(500, '系统内部错误'))
+//     })
+// })
+function createUser({phoneNumber, userName},res){
+    login.createUser(phoneNumber, userName).then(data=>{
         console.log("创建一个新用户：", phoneNumber, data.insertId)
         logger.info(`--------------\n创建一个新用户：\n, ${phoneNumber}, ${data.insertId}\n\n`)
         setToken(phoneNumber, data.insertId).then((data) => {
@@ -163,16 +215,12 @@ router.post('/loginByCode', (req, res, next) => {
                 },
                 isNew: true
             }));
-        }).catch(err => {
-            console.log("通过验证码登录setToken错误：", err)
-            logger.error(`"通过验证码登录setToken错误：", ${JSON.stringify(err)}`)
         })
     }).catch(err => {
-        console.error("通过验证码登录错误：", err)
-        logger.error(`"通过验证码登录错误：", ${JSON.stringify(err)}`)
-        res.json(resJson(500, '系统内部错误'))
+        console.log("通过验证码登录setToken错误：", err)
+        logger.error(`"通过验证码登录setToken错误：", ${JSON.stringify(err)}`)
     })
-})
+}
 
 const getCode = () => {
     return Array.from(
@@ -200,50 +248,50 @@ const getCode = () => {
  *   "errNo": 0
  * }
  */
-router.post('/getCode', (req, res, next) => {
-    let {phoneNumber} = req.body;
-    if (!phoneNumber) {
-        res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
-        return false
-    }
-    if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
-        res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
-        return false
-    }
-
-    getKey(phoneNumber).then(value => {
-        if (value) {
-            res.json(resJson(603, '已发送短信验证码，请勿重复获取，注意查收'))
-            return Promise.reject("系统中存在对应验证码，属重复请求，已拒绝")
-        } else {
-            return Promise.resolve()
-        }
-    }).then(() => {
-        let code = getCode()
-        //测试代码
-        // setKey(phoneNumber, code).then(() => {
-        //     res.json(resJson(0, '成功', {code}))
-        // }).catch(err => {
-        //     console.error("发送验证码错误：", err)
-        //     res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
-        // })
-
-        /**
-         * 调用发送短信
-         */
-        smsSend(phoneNumber, code).then(() => {
-            return setKey(phoneNumber, code)
-        }).then(() => {
-            res.json(resJson(0, '成功'))
-        }).catch(err => {
-            console.error("发送验证码错误：", err)
-            res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
-            logger.error(`"发送验证码错误：", ${JSON.stringify(err)}`)
-        })
-    }).catch(err => {
-        console.error("redis ERROR：", err)
-    })
-})
+// router.post('/getCode', (req, res, next) => {
+//     let {phoneNumber} = req.body;
+//     if (!phoneNumber) {
+//         res.json(resJson(601, '系统检测到异常行为，已被拦截。'))
+//         return false
+//     }
+//     if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
+//         res.json(resJson(602, '系统检测到异常行为，已被拦截。'))
+//         return false
+//     }
+//
+//     getKey(phoneNumber).then(value => {
+//         if (value) {
+//             res.json(resJson(603, '已发送短信验证码，请勿重复获取，注意查收'))
+//             return Promise.reject("系统中存在对应验证码，属重复请求，已拒绝")
+//         } else {
+//             return Promise.resolve()
+//         }
+//     }).then(() => {
+//         let code = getCode()
+//         //测试代码
+//         // setKey(phoneNumber, code).then(() => {
+//         //     res.json(resJson(0, '成功', {code}))
+//         // }).catch(err => {
+//         //     console.error("发送验证码错误：", err)
+//         //     res.json(resJson(604, '系统检测到异常行为，已被拦截。'))
+//         // })
+//
+//         /**
+//          * 调用发送短信
+//          */
+//         smsSend(phoneNumber, code).then(() => {
+//             return setKey(phoneNumber, code)
+//         }).then(() => {
+//             res.json(resJson(0, '成功'))
+//         }).catch(err => {
+//             console.error("发送验证码错误：", err)
+//             res.json(resJson(604, '暂时无法获取短信'))
+//             logger.error(`"发送验证码错误：", ${JSON.stringify(err)}`)
+//         })
+//     }).catch(err => {
+//         console.error("redis ERROR：", err)
+//     })
+// })
 
 router.post('/changePasswd', (req, res, next) => {
     let {passwd, passwdOld} = req.body;
@@ -256,6 +304,7 @@ router.post('/changePasswd', (req, res, next) => {
         res.json(resJson(601, '参数不对'))
         return false
     }
+    passwd =  CryptoJS.AES.encrypt(passwd, ENV.PASSWORD_KEY).toString()
     login.changePasswd(id, passwdOld, passwd).then(data => {
         res.json(resJson(0, '成功'))
     }).catch(err => {
@@ -269,41 +318,41 @@ router.post('/changePasswd', (req, res, next) => {
     })
 })
 
-router.post('/changeNumber', (req, res) => {
-    let {phoneNumber, code} = req.body;
-    let {id = ''} = req.data
-    if (!phoneNumber || !code || !id) {
-        res.json(resJson(601, '系统检测到异常行为，已拦截。'))
-        return false
-    }
-    if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
-        res.json(resJson(602, '系统检测到异常行为，已拦截。'))
-        return false
-    }
-
-    getKey(phoneNumber).then(value => {
-        if (code === value) {
-            return Promise.resolve()
-        } else {
-            res.json(resJson(601, '验证码错误'))
-            return new Promise(() => {
-            })
-        }
-    }).then(() => {
-        login.changeNumber(phoneNumber, id).then(() => {
-            res.json(resJson(0, '成功'))
-        }).catch(err => {
-            res.json(resJson(500, '系统内部错误'))
-            console.error("修改手机号SQL出错：", err)
-            logger.error(`"修改手机号SQL出错：", ${JSON.stringify(err)}`)
-        })
-    }).catch(err => {
-        res.json(resJson(500, '系统内部错误'))
-        console.error("修改手机号出错：", err)
-        logger.error(`"修改手机号出错：", ${JSON.stringify(err)}`)
-    })
-
-})
+// router.post('/changeNumber', (req, res) => {
+//     let {phoneNumber, code} = req.body;
+//     let {id = ''} = req.data
+//     if (!phoneNumber || !code || !id) {
+//         res.json(resJson(601, '系统检测到异常行为，已拦截。'))
+//         return false
+//     }
+//     if (!/^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/.test(phoneNumber)) {
+//         res.json(resJson(602, '系统检测到异常行为，已拦截。'))
+//         return false
+//     }
+//
+//     getKey(phoneNumber).then(value => {
+//         if (code === value) {
+//             return Promise.resolve()
+//         } else {
+//             res.json(resJson(601, '验证码错误'))
+//             return new Promise(() => {
+//             })
+//         }
+//     }).then(() => {
+//         login.changeNumber(phoneNumber, id).then(() => {
+//             res.json(resJson(0, '成功'))
+//         }).catch(err => {
+//             res.json(resJson(500, '系统内部错误'))
+//             console.error("修改手机号SQL出错：", err)
+//             logger.error(`"修改手机号SQL出错：", ${JSON.stringify(err)}`)
+//         })
+//     }).catch(err => {
+//         res.json(resJson(500, '系统内部错误'))
+//         console.error("修改手机号出错：", err)
+//         logger.error(`"修改手机号出错：", ${JSON.stringify(err)}`)
+//     })
+//
+// })
 
 router.post('/changeNickname', (req, res) => {
     let {nickname} = req.body;

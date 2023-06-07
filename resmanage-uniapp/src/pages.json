@@ -67,6 +67,20 @@
         "navigationStyle": "custom",
         "disableScroll": true
       }
+    },
+    {
+      "path": "pages/login/register",
+      "style": {
+        "navigationBarTitleText": "注册",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/setting/labelSetting",
+      "style": {
+        "navigationBarTitleText": "标签",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "easycom": {

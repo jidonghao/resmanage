@@ -414,6 +414,40 @@ function uploadFileFun(){
 </script>
 
 <style scoped lang="scss">
+.menu{
+  z-index: 999;
+  opacity: 0.95;
+  height: auto;
+  border-radius: 12upx;
+  overflow: hidden;
+  color: black;
+  box-shadow: 0 0 20upx 10upx rgba(0, 0, 0, 0.2);
+  transform-origin: right -12upx;
+  animation: show 0.15s ease-in-out forwards;
+
+  @keyframes show {
+    0% {
+      transform: scale(0);
+    }
+    90% {
+      transform: scale(1.02);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  .item {
+    --border: 1upx;
+    padding: 12upx;
+    background: rgba(255, 255, 255, 1);
+    border-bottom: var(--border) solid rgba(187, 187, 187, 0.6);
+
+    &:active {
+      background: #f5f5f5;
+    }
+  }
+}
+
 .container {
   padding: 0;
   background: #fefefe;

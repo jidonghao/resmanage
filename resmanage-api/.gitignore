@@ -28,3 +28,6 @@ yarn.lock
 /apiDoc/
 /.env.dev
 /uploadFiles/
+
+/public
+/public/*

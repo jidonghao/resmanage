@@ -1,14 +1,14 @@
 <template>
   <view class="contain global--container">
     <view class="myInfo item" @click="goPage('/pages/my/myInfo/myInfo')">
-      <image class="avatar" :src="avatar"></image>
+      <image class="avatar" :src="avatar"/>
       <view>
         <view class="nickName">{{ nickName || "用户0121211111" }}</view>
-        <view class="phoneNumber">+86 {{ phoneNumber }}</view>
+<!--        <view class="phoneNumber">+86 {{ phoneNumber }}</view>-->
       </view>
       <image class="arrowImg" src="@/static/icon/in-arrow.svg"/>
     </view>
-<!--    <arrow-list title="设置"/>-->
+    <arrow-list title="标签设置"/>
 <!--    <arrow-list title="关于"/>-->
   </view>
     <my-custom-tab-bar :index="2"/>

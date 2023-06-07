@@ -3,7 +3,7 @@
         <custom-tab-bar :direction="direction" :selected="props.index||0" @onTabItemTap="onTabClick"/>
     </view>
 </template>
-<style scoped lang="scss">
+<style lang="scss">
 .user-custom-tab-bar {
     border-bottom: 1px solid #e1e1e1;
     background-color: rgb(248, 248, 248);
@@ -23,7 +23,10 @@
         padding-top: 40px;
     }
 }
-
+::v-deep.uni-tabbar .uni-tabbar__icon {
+    width: 48rpx !important;
+    height: 48rpx !important;
+}
 </style>
 <script setup lang="ts">
 import {ref} from "vue";
