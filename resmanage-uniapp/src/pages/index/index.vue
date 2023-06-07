@@ -1,5 +1,5 @@
 <template>
-    <view class="global--container">
+    <view class="global--container" @contextmenu.prevent="false">
         <view class="nav-style" :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
               @click="closeMenu">
             <view class="leftControl" @click="goBackFolder">
@@ -53,8 +53,9 @@
         </view>
             <view class="folder-menu-back" v-if="showFileMenuShow" @click="closeFileMenu">
               <view class="menu menu-view" @click.stop="false"  @click="fileMenuFun"
-                    :style="`top:${fileMenuPlace.y}px;left:${fileMenuPlace.x}px`">
+                    :style="`top:${fileMenuPlace.y}px;left:${fileMenuPlace.x}px;transform-origin: left -12upx;`">
                 <view class="item" data-action='rename'>重命名</view>
+                <view class="item" data-action='download'>下载</view>
 <!--                <view class="item" data-action='label'>标签</view>-->
                 <view class="item danger" data-action='del'>删除</view>
               </view>
@@ -77,7 +78,7 @@ import file from "@/api/file";
 import {ref, unref} from 'vue'
 import {onLoad, onReady} from "@dcloudio/uni-app";
 import login from "@/api/login";
-import {showModal} from "@/utils/utils";
+import {downloadFile, showModal} from "@/utils/utils";
 import {uploadFile} from "@/api/upload";
 import eventBus from "@/utils/event-bus";
 import IsEmpty from "@/components/isEmpty/isEmpty.vue";
@@ -143,6 +144,9 @@ function fileMenuFun(e:any){
             break;
         case 'label':
 
+            break
+        case 'download':
+            downloadFile(fileList.value[selectItemIndex.value].filePath,fileList.value[selectItemIndex.value].fileName)
             break
         case 'del':
             // 执行删除操作
