@@ -92,6 +92,10 @@ router.post('/login', (req, res, next) => {
         res.json(resJson(600, '账号或密码错误'))
     } else {
         login.queryByUsername(user, passwd).then(data => {
+            if(!data||(data instanceof Array && data.length===0)){
+                res.json(resJson(600, '账号或密码错误'))
+                return new Promise(()=>{})
+            }
             let sqlBack = data[0],
                 password = CryptoJS.AES.decrypt(sqlBack?.passwd, ENV.PASSWORD_KEY).toString(CryptoJS.enc.Utf8) + ''
             if (passwd === password && user === sqlBack?.username) {
@@ -109,7 +113,7 @@ router.post('/login', (req, res, next) => {
                     }));
                 })
             } else {
-                res.json(resJson(600, '手机号或密码错误'))
+                res.json(resJson(600, '账号或密码错误'))
             }
         }).catch(err => {
             console.error(err)
