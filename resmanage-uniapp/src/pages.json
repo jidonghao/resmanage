@@ -5,8 +5,7 @@
       "path": "pages/recent/recent",
       "style": {
         "navigationBarTitleText": "最近项目",
-        "enablePullDownRefresh": false,
-        "navigationStyle": "custom"
+        "enablePullDownRefresh": false
       }
     },
     {
@@ -58,29 +57,6 @@
         "navigationBarTitleText": "修改昵称",
         "enablePullDownRefresh": false
       }
-    },
-    {
-      "path": "pages/my/myInfo/changeAvatar",
-      "style": {
-        "navigationBarTitleText": "头像",
-        "enablePullDownRefresh": false,
-        "navigationStyle": "custom",
-        "disableScroll": true
-      }
-    },
-    {
-      "path": "pages/login/register",
-      "style": {
-        "navigationBarTitleText": "注册",
-        "enablePullDownRefresh": false
-      }
-    },
-    {
-      "path": "pages/setting/labelSetting",
-      "style": {
-        "navigationBarTitleText": "标签",
-        "enablePullDownRefresh": false
-      }
     }
   ],
   "easycom": {
@@ -94,8 +70,7 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "资源管理",
     "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8",
-    "navigationBarHidden": true
+    "backgroundColor": "#F8F8F8"
   },
   "tabBar": {
     "borderStyle": "black",

@@ -1,16 +1,14 @@
 <template>
   <view class="contain">
-    <view @click="goPage('/pages/my/myInfo/changeAvatar')">
-      <arrow-list title="头像" showLine>
-        <image class="avatar" :src="avatar"></image>
-      </arrow-list>
-    </view>
+    <arrow-list title="头像" showLine>
+      <image class="avatar" :src="avatar"></image>
+    </arrow-list>
     <view @click="goPage('/pages/my/myInfo/changeNickname')">
       <arrow-list title="昵称" showLine :value="nickName"/>
     </view>
-<!--    <view @click="goPage('/pages/my/myInfo/changePhoneNumber')">-->
-<!--      <arrow-list title="手机号" :value="phoneNumber"/>-->
-<!--    </view>-->
+    <view @click="goPage('/pages/my/myInfo/changePhoneNumber')">
+      <arrow-list title="手机号" :value="phoneNumber"/>
+    </view>
     <view @click="goPage('/pages/my/myInfo/changePasswd')">
       <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
     </view>
