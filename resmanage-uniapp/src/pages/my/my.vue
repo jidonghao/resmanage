@@ -8,7 +8,9 @@
       </view>
       <image class="arrowImg" src="@/static/icon/in-arrow.svg"/>
     </view>
-    <arrow-list title="标签设置"/>
+      <view class=""  @click="goPage('/pages/setting/labelSetting')">
+          <arrow-list title="标签设置" />
+      </view>
 <!--    <arrow-list title="关于"/>-->
   </view>
     <my-custom-tab-bar :index="2"/>

@@ -86,7 +86,27 @@ LIMIT ?,?`, params);
                 }
             });
     },
-
+    // In the file object
+    addLabel: (userId, labelName) => {
+        return new Promise((resolve, reject) => {
+            sql(`SELECT COUNT(*) AS count FROM res_label WHERE user_id = ? AND label_name = ?`, [userId, labelName])
+                .then(result => {
+                    if (result[0].count > 0) {
+                        reject('Label already exists');
+                    } else {
+                        return sql(`INSERT INTO res_label (user_id, label_name, add_time, update_time) VALUES (?, ?, NOW(), NOW())`, [userId, labelName]);
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        resolve(data);
+                    }
+                })
+                .catch(err => {
+                    reject(err);
+                });
+        });
+    },
     removeLabelFromItem: (userId, fileId, labelId) => {
         // First, verify the user is the owner of the file
         return sql(`SELECT user_id FROM res_file WHERE id = ?`, [fileId])
@@ -104,12 +124,16 @@ LIMIT ?,?`, params);
         return sql(`INSERT INTO res_label (user_id, label_name, add_time) VALUES (?, ?, NOW())`, [userId, labelName]);
     },
     deleteLabel: (userId, labelId) => {
-        // Delete the label for the user
-        return sql(`UPDATE res_label SET deleted = 1 WHERE id = ? AND user_id = ?`, [labelId, userId]);
+        // Verify if the user is the owner of the label and then delete the label
+        return sql(`UPDATE res_label SET deleted = 1 WHERE id = ? AND user_id = ?`, [labelId, userId])
+            .then(() => {
+                return sql(`UPDATE res_file_label SET deleted = 1 WHERE label_id = ?`, [labelId]);
+            });
     },
+
     getLabels: (userId) => {
         // Fetch labels for the user
-        return sql(`SELECT * FROM res_label WHERE user_id = ? AND deleted = 0`, [userId]);
+        return sql(`SELECT id, label_name as labelName FROM res_label WHERE user_id = ? AND deleted = 0`, [userId]);
     },
     getFilesByLabel: (userId, labelId) => {
         // Fetch files based on label for the user
@@ -157,6 +181,14 @@ LIMIT ?,?`, params);
     },
     deleteFile: (userId, fileId) => {
         return sql(`UPDATE res_file SET deleted = 1 WHERE user_id = ? AND id = ?`, [userId, fileId]);
+    },
+    updateLabel: (userId, labelId, labelName) => {
+        // Update label name
+        return sql(`
+        UPDATE res_label 
+        SET label_name = ? 
+        WHERE id = ? AND user_id = ?
+    `, [labelName, labelId, userId]);
     },
 }
 

@@ -17,7 +17,7 @@
           <button class="getCaptchaBtn" :disabled="captchaDis" @click="getCaptcha">{{ captchaPlaceHolder }}</button>
         </view>
       </uni-forms-item>
-<!--      <uni-forms-item required label="邀请码：" name="phoneNumber">-->
+<!--      <uni-forms-item required label.vue="邀请码：" name="phoneNumber">-->
 <!--        <uni-easyinput type="text" :maxlength="11" v-model="formData.invitationCode" placeholder="请输入邀请码"/>-->
 <!--      </uni-forms-item>-->
     </uni-forms>
@@ -25,7 +25,7 @@
   <!--  -->
   <view class="container loginView" v-show="useSelect===2">
     <uni-forms :modelValue="formData" label-width="70px">
-<!--      <uni-forms-item required label="手机号：" name="phoneNumber">-->
+<!--      <uni-forms-item required label.vue="手机号：" name="phoneNumber">-->
 <!--        <uni-easyinput type="number" :maxlength="11" v-model="formData.phoneNumber" placeholder="请输入手机号"/>-->
 <!--      </uni-forms-item>-->
       <uni-forms-item required label="账号：" name="user">

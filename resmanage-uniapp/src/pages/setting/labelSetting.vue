@@ -1,22 +1,3 @@
 <template>
-  <view>
-    
-  </view>
+    <label-setting :file-id="-1" :labels="[]"></label-setting>
 </template>
-
-<script>
-export default {
-  data() {
-    return {
-
-    }
-  },
-  methods: {
-
-  }
-}
-</script>
-
-<style scoped>
-
-</style>

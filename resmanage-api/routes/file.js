@@ -123,7 +123,7 @@ router.post('/addFolder', (req, res, next) => {
 
 
 /**
- * @api {POST} /api/file/addLabel 添加标签到文件
+ * @api {POST} /api/file/addLabelToItem 添加标签到文件
  * @apiGroup file
  * @apiDescription 给指定文件添加标签
  * @apiVersion 1.0.0
@@ -144,7 +144,7 @@ router.post('/addFolder', (req, res, next) => {
  * 	"errNo": 0
  * }
  */
-router.post('/addLabel', (req, res, next) => {
+router.post('/addLabelToItem', (req, res, next) => {
     let {fileId, labelId} = req.body;
     let {id = ""} = req.data; // Assuming id is the userId
     if (!fileId || !labelId || !id) {
@@ -159,6 +159,47 @@ router.post('/addLabel', (req, res, next) => {
                 res.json(resJson(500, '系统内部错误'));
                 logger.error(`"错误addLabel：", ${JSON.stringify(err)}`)
 
+            });
+    }
+});
+/**
+ * @api {POST} /api/file/addLabel 新增标签
+ * @apiGroup file
+ * @apiDescription 创建新的标签
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {String} labelName 标签名称
+ * @apiParamExample {json} request-example
+ * {
+ *  "labelName": "newLabel"
+ * }
+ *
+ * @apiSuccess {String} errMsg 错误信息
+ * @apiSuccess {String} errNo 500:系统内部错误，601:参数错误 0:成功
+ * @apiSuccessExample  {json} success-example
+ * {
+ * 	"id": Number,
+ * 	"errMsg": "成功",
+ * 	"errNo": 0
+ * }
+ */
+router.post('/addLabel', (req, res, next) => {
+    let {labelName = ""} = req.body,
+        {id = ""} = req.data
+    if (!labelName || !id) {
+        res.json(resJson(601, '失败，参数错误'))
+    } else {
+        file.addLabel(id, labelName)
+            .then(data => {
+                res.json(resJson(0, '成功', {id: data.insertId}))
+            })
+            .catch(err => {
+                console.error("addLabel:", err)
+                if (err === 'Label already exists') {
+                    res.json(resJson(602, '标签已存在'))
+                } else {
+                    res.json(resJson(500, '系统内部错误'))
+                }
             });
     }
 });
@@ -185,7 +226,7 @@ router.post('/addLabel', (req, res, next) => {
  * 	"errNo": 0
  * }
  */
-router.post('/removeLabel', (req, res, next) => {
+router.post('/removeLabelFromItem', (req, res, next) => {
     let {fileId, labelId} = req.body;
     let {id = ""} = req.data; // Assuming id is the userId
     if (!fileId || !labelId || !id) {
@@ -270,13 +311,12 @@ router.post('/deleteLabel', (req, res, next) => {
         res.json(resJson(601, '失败，参数错误'));
     } else {
         file.deleteLabel(id, labelId)
-            .then(() => {
-                res.json(resJson(0, '成功'));
+            .then(data => {
+                res.json(resJson(0, '成功', {labelId: labelId}));
             })
             .catch(err => {
                 console.error("deleteLabel:", err);
                 res.json(resJson(500, '系统内部错误'));
-                logger.error(`"错误deleteLabel：", ${JSON.stringify(err)}`)
             });
     }
 });
@@ -529,5 +569,42 @@ router.post('/deleteFile', (req, res, next) => {
         });
     }
 });
-
+/**
+ * @api {PUT} /api/file/updateLabel 更新标签名称
+ * @apiGroup file
+ * @apiDescription 更新标签名称
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {Number} labelId 标签ID
+ * @apiParam {String} labelName 新的标签名称
+ * @apiParamExample {json} request-example
+ * {
+ *  "labelId": 456,
+ *  "labelName": "新标签名称"
+ * }
+ *
+ * @apiSuccess {String} errMsg 错误信息
+ * @apiSuccess {String} errNo 500:系统内部错误，601:参数错误 0:成功
+ * @apiSuccessExample  {json} success-example
+ * {
+ * 	"errMsg": "成功",
+ * 	"errNo": 0
+ * }
+ */
+router.post('/updateLabel', (req, res, next) => {
+    let {labelId, labelName} = req.body;
+    let {id = ""} = req.data; // Assuming id is the userId
+    if (!labelId || !labelName || !id) {
+        res.json(resJson(601, '失败，参数错误'));
+    } else {
+        file.updateLabel(id, labelId, labelName)
+            .then(() => {
+                res.json(resJson(0, '成功'));
+            })
+            .catch(err => {
+                console.error("updateLabel:", err);
+                res.json(resJson(500, '系统内部错误'));
+            });
+    }
+});
 export default router

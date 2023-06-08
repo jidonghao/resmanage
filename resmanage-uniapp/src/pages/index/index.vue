@@ -1,18 +1,22 @@
 <template>
     <view class="global--container" @contextmenu.prevent="false">
-        <view class="nav-style" :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
+        <view class="nav-style"
+              :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
               @click="closeMenu">
             <view class="leftControl" @click="goBackFolder">
-                <uni-icons type="back" size="24" style="margin-left: 10upx"  v-if="folderShowList.length>1"/>
-                <view class="leftControl--label"  v-if="folderShowList.length>1">{{folderShowList[folderShowList.length-1].label}}</view>
+                <uni-icons type="back" size="24" style="margin-left: 10upx" v-if="folderShowList.length>1"/>
+                <view class="leftControl--label" v-if="folderShowList.length>1">
+                    {{ folderShowList[folderShowList.length - 1].label }}
+                </view>
             </view>
             <view class="rightControl" :class="{'scaleRightControl':folderShowList.length>1}">
                 <view class="searchInput">
-                  <uni-easyinput suffixIcon="search" type="text" v-model="formQuery.fileName" placeholder="搜索文件名"
-                                 @iconClick.stop="search" @confirm="search" confirm-type="search"/>
+                    <uni-easyinput suffixIcon="search" type="text" v-model="formQuery.fileName" placeholder="搜索文件名"
+                                   @iconClick.stop="search" @confirm="search" confirm-type="search"/>
 
                 </view>
-                <view class="filterBtn" @click.stop="showMenuHandler" :style="showMenu?'--background-color: dodgerblue':''">
+                <view class="filterBtn" @click.stop="showMenuHandler"
+                      :style="showMenu?'--background-color: dodgerblue':''">
                     <view v-for="i in 3" :key="i"/>
                 </view>
             </view>
@@ -23,52 +27,66 @@
                   :style="`${item.hideBorder?'--border:0':''}`">{{ item.label }}
             </view>
         </view>
-    <scroll-view class="container" :refresher-threshold="100" :scroll-y="enableScroll"
-                 :style="`padding-top:${statusBar.navHeight}px;`"
-                 refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
-                 @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
-        <view class="scroll-container">
-          <IsEmpty v-if="fileList.length===0">暂无数据</IsEmpty>
-            <folder
-                v-for="(item, i) in fileList"
-                :index="i"
-                :filePath="item.filePath"
-                :typeDetail="item.typeDetail"
-                :key="item.id"
-                :id="item.id"
-                :isNew="item.isNew"
-                :fileName="item.fileName"
-                :showMenu="item.showMenu"
-                :fullType="item.fullType"
-                @click.stop="clickFile($event, item)"
-                @touchstart.stop="touchStart($event, item, i)"
-                @touchend.stop="touchEnd"
-                @touchmove.stop="touchMove"
-                @onChange="fileDetailChange"
-                @completeAddFolder="completeAddFolder"
-                @closeMenu="closeFileMenu"
-                @completeEditFile="completeEditFile"
-                @contextmenu.prevent="showFileMenu($event, item, i)"
-            />
-        </view>
-            <view class="folder-menu-back" v-if="showFileMenuShow" @click="closeFileMenu">
-              <view class="menu menu-view" @click.stop="false"  @click="fileMenuFun"
-                    :style="`top:${fileMenuPlace.y}px;left:${fileMenuPlace.x}px;transform-origin: left -12upx;`">
-                <view class="item" data-action='rename'>重命名</view>
-                <view class="item" data-action='download'>下载</view>
-<!--                <view class="item" data-action='label'>标签</view>-->
-                <view class="item danger" data-action='del'>删除</view>
-              </view>
+        <scroll-view class="container" :refresher-threshold="100" :scroll-y="enableScroll"
+                     :style="`padding-top:${statusBar.navHeight}px;`"
+                     refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
+                     @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
+            <view class="scroll-container">
+                <IsEmpty v-if="fileList.length===0">暂无数据</IsEmpty>
+                <folder
+                        v-for="(item, i) in fileList"
+                        class="folder" :style="`animation-delay: ${i * 0.01}s`"
+                        :index="i"
+                        :filePath="item.filePath"
+                        :typeDetail="item.typeDetail"
+                        :key="item.id"
+                        :id="item.id"
+                        :isNew="item.isNew"
+                        :fileName="item.fileName"
+                        :showMenu="item.showMenu"
+                        :fullType="item.fullType"
+                        @click.stop="clickFile($event, item)"
+                        @touchstart.stop="touchStart($event, item, i)"
+                        @touchend.stop="touchEnd"
+                        @touchmove.stop="touchMove"
+                        @onChange="fileDetailChange"
+                        @completeAddFolder="completeAddFolder"
+                        @closeMenu="closeFileMenu"
+                        @completeEditFile="completeEditFile"
+                        @contextmenu.prevent="showFileMenu($event, item, i)"
+                />
             </view>
-    </scroll-view>
+            <view class="folder-menu-back" v-if="showFileMenuShow" @click="closeFileMenu">
+                <view class="menu menu-view" @click.stop="false" @click="fileMenuFun"
+                      :style="`top:${fileMenuPlace.y}px;left:${fileMenuPlace.x}px;transform-origin: left -12upx;`">
+                    <view class="item" data-action='rename'>重命名</view>
+                    <view class="item" data-action='download'>下载</view>
+                    <view class="item" data-action='label'>标签</view>
+                    <view class="item danger" data-action='del'>删除</view>
+                </view>
+            </view>
+        </scroll-view>
 
         <uni-popup ref="previewPopup" type="center" :animation="false">
             <view class="popup-content" @click="closePreviewPopup">
-              <image mode="aspectFit" v-if="nowDisplayItem.type === 'image'" :src="nowDisplayItem.filePath"></image>
-              <video controls object-fit="contain" muted v-if="nowDisplayItem.type === 'video'" :src="nowDisplayItem.filePath"></video>
+                <image mode="aspectFit" v-if="nowDisplayItem.type === 'image'" :src="nowDisplayItem.filePath"></image>
+                <video controls object-fit="contain" muted v-if="nowDisplayItem.type === 'video'"
+                       :src="nowDisplayItem.filePath"></video>
             </view>
         </uni-popup>
     </view>
+
+    <uni-popup ref="setLabelPopup" :animation="false">
+        <view class="labelPopupView">
+            <view class="btn-view">
+                <button class="label-btn" size="mini" @click="setLabelPopup.close()">完成</button>
+            </view>
+            <view class="labelPopup">
+                <label-setting :file-id="fileList[selectItemIndex].id" @onLabelChange="onLabelChange" :index="selectItemIndex"
+                               :labels="fileList[selectItemIndex].labelIds"></label-setting>
+            </view>
+        </view>
+    </uni-popup>
     <my-custom-tab-bar :index="1"/>
 </template>
 
@@ -86,56 +104,56 @@ import IsEmpty from "@/components/isEmpty/isEmpty.vue";
 let statusBar = ref({statusBarHeight: 1, navHeight: 1})
 
 onLoad(() => {
-  let {statusBarHeight = 0, system = ""} = uni.getSystemInfoSync()
-  statusBar.value.statusBarHeight = statusBarHeight
-  statusBar.value.navHeight = statusBarHeight + (system.indexOf('iOS') > -1 ? 44 : 48)
+    let {statusBarHeight = 0, system = ""} = uni.getSystemInfoSync()
+    statusBar.value.statusBarHeight = statusBarHeight
+    statusBar.value.navHeight = statusBarHeight + (system.indexOf('iOS') > -1 ? 44 : 48)
 })
 
 let formQuery = ref({
-      page: 1, limit: 100, folderId: -1, fileName: ""
+        page: 1, limit: 100, folderId: -1, fileName: ""
     }),
-    total = ref(0),pages=ref(0),list = ref<any[]>([]),refreshing=ref(false),
+    total = ref(0), pages = ref(0), list = ref<any[]>([]), refreshing = ref(false),
     queryFolderIdList: Number[] = [-1],
     fileList: any = ref([]),
-    queryGetList = (showTips=false) => {
-      formQuery.value.folderId = folderShowList.value[folderShowList.value.length-1].id
+    queryGetList = (showTips = false) => {
+        formQuery.value.folderId = folderShowList.value[folderShowList.value.length - 1].id
 
-      file.queryFile(unref(formQuery)).then((res: any) => {
-          if(formQuery.value.page===1){
-              fileList.value = res.list
-          }else{
-              fileList.value = [...fileList.value,...res.list]
-          }
-          total.value = res.total
-          pages.value = res.pages
-          if(showTips){
-              setTimeout(()=>{
-                  refreshing.value=false
-                  uni.showToast({
-                      title:'加载成功',
-                      icon:'none'
-                  })
-              },600)
-          }
-      }).catch(err => {
-          console.error(err)
-          uni.showToast({
-              title:err.errMsg||'加载失败',
-              icon:'none'
-          })
-          refreshing.value=false
-      })
+        file.queryFile(unref(formQuery)).then((res: any) => {
+            if (formQuery.value.page === 1) {
+                fileList.value = res.list
+            } else {
+                fileList.value = [...fileList.value, ...res.list]
+            }
+            total.value = res.total
+            pages.value = res.pages
+            if (showTips) {
+                setTimeout(() => {
+                    refreshing.value = false
+                    uni.showToast({
+                        title: '加载成功',
+                        icon: 'none'
+                    })
+                }, 600)
+            }
+        }).catch(err => {
+            console.error(err)
+            uni.showToast({
+                title: err.errMsg || '加载失败',
+                icon: 'none'
+            })
+            refreshing.value = false
+        })
     }
 const enableScroll = ref(true),
     showFileMenuShow = ref(false),
-    fileMenuPlace = ref({x:0,y:0}),selectItemIndex = ref(-1)
+    fileMenuPlace = ref({x: 0, y: 0}), selectItemIndex = ref(-1)
 
-function fileMenuFun(e:any){
-    if(selectItemIndex.value === -1) return false
+function fileMenuFun(e: any) {
+    if (selectItemIndex.value === -1) return false
 
     const action = e.target.dataset.action;
     showFileMenuShow.value = false
-    switch(action) {
+    switch (action) {
         case 'rename':
             // 执行重命名操作
             fileList.value[selectItemIndex.value].isNew = true
@@ -143,19 +161,20 @@ function fileMenuFun(e:any){
             closeFileMenu()
             break;
         case 'label':
-
+            setLabelPopup.value.open()
             break
         case 'download':
-            downloadFile(fileList.value[selectItemIndex.value].filePath,fileList.value[selectItemIndex.value].fileName)
+            downloadFile(fileList.value[selectItemIndex.value].filePath, fileList.value[selectItemIndex.value].fileName)
             break
         case 'del':
             // 执行删除操作
-            showModal({title:'提示',content:'确定要删除吗？'}).then(()=>{
-                file.deleteFile({fileId: fileList.value[selectItemIndex.value].id}).then(()=>{
-                    uni.showToast({title:'删除'})
-                    fileList.value.splice(selectItemIndex.value,1)
-                }).catch((err:any)=>{
-                    showModal({content:err.errMsg||'操作失败，请稍后重试',}).then(()=>{})
+            showModal({title: '提示', content: '确定要删除吗？'}).then(() => {
+                file.deleteFile({fileId: fileList.value[selectItemIndex.value].id}).then(() => {
+                    uni.showToast({title: '删除'})
+                    fileList.value.splice(selectItemIndex.value, 1)
+                }).catch((err: any) => {
+                    showModal({content: err.errMsg || '操作失败，请稍后重试',}).then(() => {
+                    })
                 })
 
             })
@@ -165,41 +184,43 @@ function fileMenuFun(e:any){
             break;
     }
 }
-function completeEditFile(){
-    if(!fileList.value[selectItemIndex.value].fileName){
-        showModal({content:'文件名不能为空',showCancel:false}).then(()=>{
+
+function completeEditFile() {
+    if (!fileList.value[selectItemIndex.value].fileName) {
+        showModal({content: '文件名不能为空', showCancel: false}).then(() => {
 
         })
     }
     file.updateFileName({
-        fileId:fileList.value[selectItemIndex.value].id,
-        fileName:fileList.value[selectItemIndex.value].fileName
-    }).then(()=>{
-        uni.showToast({title:'修改成功'})
+        fileId: fileList.value[selectItemIndex.value].id,
+        fileName: fileList.value[selectItemIndex.value].fileName
+    }).then(() => {
+        uni.showToast({title: '修改成功'})
         fileList.value[selectItemIndex.value].isNew = false
-    }).catch((err:any)=>{
-        showModal({content:err.errMsg||'操作失败，请稍后重试',}).then(()=>{})
+    }).catch((err: any) => {
+        showModal({content: err.errMsg || '操作失败，请稍后重试',}).then(() => {
+        })
     })
 }
 
-function showFileMenu(event:any,item:any,i:number,longPress?:string){
-    if(selectItemIndex.value!==-1&&fileList.value[selectItemIndex.value].id)
+function showFileMenu(event: any, item: any, i: number, longPress?: string) {
+    if (selectItemIndex.value !== -1 && fileList.value[selectItemIndex.value].id)
         fileList.value[selectItemIndex.value].isNew = false
 
     selectItemIndex.value = i
     let x, y;
-    if(longPress){
-        x = event.changedTouches[0].clientX ||0;
-        y = event.changedTouches[0].clientY-30||0;
+    if (longPress) {
+        x = event.changedTouches[0].clientX || 0;
+        y = event.changedTouches[0].clientY - 30 || 0;
         // 检查菜单是否会超出窗口的右边缘
         const menuWidth = 240; // 这里设置你的菜单的宽度
 
         if (x + menuWidth > window.innerWidth) {
             x = window.innerWidth - menuWidth;
         }
-    }else{
-        x = event.pageX-50||0;
-        y = event.pageY-30||0;
+    } else {
+        x = event.pageX - 50 || 0;
+        y = event.pageY - 30 || 0;
         // 检查菜单是否会超出窗口的右边缘
         const menuWidth = 320; // 这里设置你的菜单的宽度
 
@@ -218,30 +239,45 @@ function showFileMenu(event:any,item:any,i:number,longPress?:string){
     return false
 }
 
-function closeFileMenu(event?:any){
+function closeFileMenu(event?: any) {
     showFileMenuShow.value = false
     enableScroll.value = true
     return false
 }
 
-function pullDown(){
+function pullDown() {
     formQuery.value.page = 1
-    refreshing.value=true
+    refreshing.value = true
     queryGetList(true)
 }
-function getMoreList(){
-    if(pages.value>formQuery.value.page++){
+
+function getMoreList() {
+    if (pages.value > formQuery.value.page++) {
         queryGetList()
-    }else{
+    } else {
         uni.showToast({
-            title:'没有更多了',
-            icon:'none'
+            title: '没有更多了',
+            icon: 'none'
         })
     }
 }
+
+const setLabelPopup = ref<any>(), labelPopupPlace = ref("center")
+function onLabelChange(e:{ labels: [], index: number }){
+    fileList.value[e.index].labelIds = e.labels
+}
+function setLabelPopupPlace() {
+    if (window.innerWidth > 1023) {
+        labelPopupPlace.value = 'center'
+    } else {
+        labelPopupPlace.value = 'bottom'
+    }
+}
+
 onReady(() => {
-  queryGetList()
-    eventBus.on('onUploadProgress', (response:any) => {
+    window.addEventListener("resize", setLabelPopupPlace)
+    queryGetList()
+    eventBus.on('onUploadProgress', (response: any) => {
         const res = response.res
         console.log('上传进度' + response.progress);
         console.log('已经上传的数据长度' + res.totalBytesSent);
@@ -250,22 +286,24 @@ onReady(() => {
 })
 
 const folderShowList = ref([
-    {label: '/',id: -1}
+    {label: '/', id: -1}
 ])
-function fileDetailChange(e: { value:String,index:String|Number }){
+
+function fileDetailChange(e: { value: String, index: String | Number }) {
     fileList.value[+e.index].fileName = e.value
 }
-function goBackFolder(){
+
+function goBackFolder() {
     folderShowList.value.pop()
     formQuery.value.page = 1
-    formQuery.value.folderId = folderShowList.value[  folderShowList.value.length-1].id
+    formQuery.value.folderId = folderShowList.value[folderShowList.value.length - 1].id
     queryGetList()
 }
 
 const timer = ref<any>(null);
 const isLongPress = ref(false);
 
-const touchStart = (event:any, item:any, i:number) => {
+const touchStart = (event: any, item: any, i: number) => {
     isLongPress.value = false;
     timer.value = setTimeout(() => {
         isLongPress.value = true;
@@ -281,36 +319,38 @@ const touchMove = () => {
     clearTimeout(timer.value);
 };
 // 点击文件
-const previewPopup:any|null = ref(null), nowDisplayItem:any = ref()
-function closePreviewPopup(){
+const previewPopup: any | null = ref(null), nowDisplayItem: any = ref()
+
+function closePreviewPopup() {
     previewPopup.value.close()
 }
-let clickFile = (event:any,item: any) => {
-    if(isLongPress.value) return false
-  if (item.isNew) return false
+
+let clickFile = (event: any, item: any) => {
+    if (isLongPress.value) return false
+    if (item.isNew) return false
     // completeAddFolder()
-  if(isAddFolder.value) return false
-  const type = item.fullType?.split('/')[0]||''
-      switch (type) {
+    if (isAddFolder.value) return false
+    const type = item.fullType?.split('/')[0] || ''
+    switch (type) {
         case 'folder': // 文件夹
-       // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
+            // 点击文件夹时需做处理：点击的文件夹id入栈，返回时出栈
             folderShowList.value.push({
                 label: item.fileName,
                 id: item.id
             })
             formQuery.value.page = 1
             queryGetList()
-          break
+            break
         case 'image': // img
         case 'video': // video
             previewPopup.value.open()
             nowDisplayItem.value = {...item, type}
-          break
-      default:
-          uni.showToast({
-              title: '该文件类型暂不支持在线预览', icon: 'none'
-          })
-          break
+            break
+        default:
+            uni.showToast({
+                title: '该文件类型暂不支持在线预览', icon: 'none'
+            })
+            break
     }
 }
 
@@ -318,98 +358,102 @@ let clickFile = (event:any,item: any) => {
 let showMenu = ref(false), menuHideIng = ref(false)
 let searchValue = ref(""),
     search = () => {
-      formQuery.value.page = 1
-      queryGetList()
+        formQuery.value.page = 1
+        queryGetList()
     }
 const topMenuOptions = ref([
-  // {label: "选择", value: 0},
-  {label: "新建文件夹", value: 1},
-  {label: "上传文件", value: 2, hideBorder: true}
+    // {label.vue: "选择", value: 0},
+    {label: "新建文件夹", value: 1},
+    {label: "上传文件", value: 2, hideBorder: true}
 ])
 const isAddFolder = ref(false) // 是否正新增文件夹
 let editFileIndex = -1
+
 /**
  * 完成文件夹编辑
  */
-function completeAddFolder(){
+function completeAddFolder() {
     closeMenu()
-    if(!isAddFolder.value||editFileIndex === -1)return false
-    uni.showLoading({title:'保存中'})
+    if (!isAddFolder.value || editFileIndex === -1) return false
+    uni.showLoading({title: '保存中'})
     file.addFolder({
-        folderName:fileList.value[editFileIndex].fileName,
-        folderId: folderShowList.value[folderShowList.value.length-1].id
-    }).then((res:any)=>{
+        folderName: fileList.value[editFileIndex].fileName,
+        folderId: folderShowList.value[folderShowList.value.length - 1].id
+    }).then((res: any) => {
         fileList.value[editFileIndex].id = res.id
         isAddFolder.value = false
         fileList.value[editFileIndex].isNew = false
-    }).catch((err:any)=>{
+    }).catch((err: any) => {
         uni.showToast({
-            title:err.errMsg||'系统繁忙，请稍后再试',
-            icon:'none'
+            title: err.errMsg || '系统繁忙，请稍后再试',
+            icon: 'none'
         })
-    }).finally(()=>{
+    }).finally(() => {
         uni.hideLoading()
     })
 }
 
 let closeMenu = () => {
-    if(selectItemIndex.value!==-1&&fileList.value[selectItemIndex.value]?.id){
-        isAddFolder.value = false
-        fileList.value[selectItemIndex.value].isNew = false
-    }
-   // completeAddFolder()
-      if (showMenu.value) {
-        menuHideIng.value = true
-        setTimeout(() => {
-          showMenu.value = false
-          menuHideIng.value = false
-        }, 250)
-      }
+        if (selectItemIndex.value !== -1 && fileList.value[selectItemIndex.value]?.id) {
+            isAddFolder.value = false
+            fileList.value[selectItemIndex.value].isNew = false
+        }
+        // completeAddFolder()
+        if (showMenu.value) {
+            menuHideIng.value = true
+            setTimeout(() => {
+                showMenu.value = false
+                menuHideIng.value = false
+            }, 250)
+        }
     },
     showMenuHandler = () => {
-    if(isAddFolder.value) return false
-      if (showMenu.value) {
-        closeMenu()
-      } else {
-        showMenu.value = true
-      }
+        if (isAddFolder.value) return false
+        if (showMenu.value) {
+            closeMenu()
+        } else {
+            showMenu.value = true
+        }
     }, selectMenu = (e: number) => {
-      closeMenu()
-      switch (e) {
-        case 0:
-          break
-        case 1:
-          fileList.value.unshift({id: -1, fileName: '新建文件夹', isNew: true,fullType:'folder'})
-            editFileIndex = 0
-          isAddFolder.value = true
-          break
-        case 2:
-            uploadFileFun()
-          break
-      }
+        closeMenu()
+        switch (e) {
+            case 0:
+                break
+            case 1:
+                fileList.value.unshift({id: -1, fileName: '新建文件夹', isNew: true, fullType: 'folder'})
+                editFileIndex = 0
+                isAddFolder.value = true
+                break
+            case 2:
+                uploadFileFun()
+                break
+        }
     }
 
-function uploadFileFun(){
+function uploadFileFun() {
     uni.chooseFile({
         count: 9,
         success: (res) => {
-            uni.showLoading({title:'正在上传',mask: true})
-            let filesList = res.tempFilePaths,tempFiles = res.tempFiles
-            if(filesList instanceof Array && tempFiles instanceof Array){
-                let files: UniApp.UploadFileOptionFiles[] | { name: string; uri: string; }[] = [],typeList:any=[]
-                filesList.forEach(item=>{
-                    files.push({name:'file',uri:item})
+            uni.showLoading({title: '正在上传', mask: true})
+            let filesList = res.tempFilePaths, tempFiles = res.tempFiles
+            if (filesList instanceof Array && tempFiles instanceof Array) {
+                let files: UniApp.UploadFileOptionFiles[] | { name: string; uri: string; }[] = [], typeList: any = []
+                filesList.forEach(item => {
+                    files.push({name: 'file', uri: item})
                 })
 
-                tempFiles.forEach((item:any)=>{
+                tempFiles.forEach((item: any) => {
                     typeList.push(item.type)
                 })
-                uploadFile(files, 'default' ,{folderId:folderShowList.value[folderShowList.value.length-1].id,typeList}).then((res:any)=>{
+                uploadFile(files, 'default', {
+                    folderId: folderShowList.value[folderShowList.value.length - 1].id,
+                    typeList
+                }).then((res: any) => {
                     // console.log(res.fileList)
                     uni.hideLoading()
                     queryGetList()
-                }).catch(()=>{
-                    showModal({content:'上传文件失败，请稍后再试',showCancel:false})
+                }).catch(() => {
+                    showModal({content: '上传文件失败，请稍后再试', showCancel: false})
                 })
             }
         }
@@ -418,7 +462,24 @@ function uploadFileFun(){
 </script>
 
 <style scoped lang="scss">
-.menu{
+
+.folder {
+  opacity: 0;
+  animation: showFolder 0.3s linear forwards;
+
+  @keyframes showFolder {
+    0% {
+      opacity: 0;
+      //transform: scale(1.1);
+    }
+    100% {
+      opacity: 1;
+      //transform: scale(1);
+    }
+  }
+}
+
+.menu {
   z-index: 999;
   opacity: 0.95;
   height: auto;
@@ -440,6 +501,7 @@ function uploadFileFun(){
       transform: scale(1);
     }
   }
+
   .item {
     --border: 1upx;
     padding: 12upx;
@@ -455,7 +517,7 @@ function uploadFileFun(){
 .container {
   padding: 0;
   background: #fefefe;
-  height: calc(100vh - 50px) ;
+  height: calc(100vh - 50px);
   width: 100vw;
   //display: flex;
   //flex-direction: row;
@@ -468,7 +530,8 @@ function uploadFileFun(){
     height: 200upx;
   }
 }
-.scroll-container{
+
+.scroll-container {
   //display: flex;
   //flex-direction: row;
   //flex-wrap: wrap;
@@ -477,36 +540,36 @@ function uploadFileFun(){
 
 .nav-style {
   position: fixed;
-    background: #f5f5f5;
-    width: 100vw;
-    display: flex;
-    z-index: 998;
-    justify-content: space-between;
-    align-items: center;
-    box-sizing: border-box;
-    padding: 0 12upx;
+  background: #f5f5f5;
+  width: 100vw;
+  display: flex;
+  z-index: 998;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 12upx;
 
-    @media screen and (min-width: 1023px) {
-        width: calc(100vw - 60px);
-    }
+  @media screen and (min-width: 1023px) {
+    width: calc(100vw - 60px);
+  }
 
-  .leftControl{
+  .leftControl {
     display: flex;
     //max-width: 360upx;
     align-items: center;
-      animation: leftControl 0.5s 0 ease-in-out;
-      overflow: hidden;
+    animation: leftControl 0.5s 0 ease-in-out;
+    overflow: hidden;
 
-      @keyframes leftControl {
-          0%{
-              width: 0;
-          }
-          100%{
-              width: 400upx;
-          }
+    @keyframes leftControl {
+      0% {
+        width: 0;
       }
+      100% {
+        width: 400upx;
+      }
+    }
 
-    .leftControl--label{
+    .leftControl--label {
       width: 100%;
       white-space: nowrap;
       padding-right: 24upx;
@@ -515,25 +578,29 @@ function uploadFileFun(){
       overflow: hidden;
     }
   }
-  .rightControl{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 750rpx;
-      transition: all 0.2s;
-      .searchInput {
-          margin-left: 24upx;
-          width: 100%;
-      }
-      .filterBtn{
-          flex-shrink: 0;
-      }
-  }
-    .scaleRightControl{
-        @media screen and (max-width: 1023px) {
-            width: 500rpx;
-        }
+
+  .rightControl {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 750rpx;
+    transition: all 0.2s;
+
+    .searchInput {
+      margin-left: 24upx;
+      width: 100%;
     }
+
+    .filterBtn {
+      flex-shrink: 0;
+    }
+  }
+
+  .scaleRightControl {
+    @media screen and (max-width: 1023px) {
+      width: 500rpx;
+    }
+  }
 
   .filterBtn {
     margin-left: 16upx;
@@ -586,82 +653,129 @@ function uploadFileFun(){
   }
 }
 
-.navbar--address{
-    height: 56upx;
-    width: 100vw;
+.navbar--address {
+  height: 56upx;
+  width: 100vw;
   overflow: hidden;
   box-sizing: border-box;
-    background: #f5f5f5;
-    position: fixed;
+  background: #f5f5f5;
+  position: fixed;
   display: flex;
   align-items: center;
-justify-content: flex-start;
+  justify-content: flex-start;
   z-index: 99;
-.address{
-  width: 100%;
-  padding: 0 12upx;
-  box-sizing: border-box;
-  height: 96%;
-  border-radius: 12upx;
-  margin-left: 24upx;
-  margin-bottom: 6upx;
-  background: white;
-  display: flex;
-  align-items: center;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  view{
-    font-size: 20upx;
+
+  .address {
+    width: 100%;
     padding: 0 12upx;
-    border-radius: 6upx;
-    margin-right: 4upx;
-    background: whitesmoke;
+    box-sizing: border-box;
+    height: 96%;
+    border-radius: 12upx;
+    margin-left: 24upx;
+    margin-bottom: 6upx;
+    background: white;
     display: flex;
-    justify-content: center;
     align-items: center;
+    overflow-x: scroll;
+    overflow-y: hidden;
+
+    view {
+      font-size: 20upx;
+      padding: 0 12upx;
+      border-radius: 6upx;
+      margin-right: 4upx;
+      background: whitesmoke;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
   }
 }
+
+.popup-content {
+  width: 60vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  image {
+    width: 100%;
+  }
+
+  video {
+    width: 100%;
+    height: 40%;
+  }
+
+  @media screen and (max-width: 1024px) {
+    width: 750rpx;
+    image {
+      height: 80%;
+    }
+  }
 }
-.popup-content{
-    width: 60vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    image{
+
+.folder-menu-back {
+  width: 100vw;
+  height: 100vh;
+  //background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.menu-view {
+  width: 260upx;
+  position: absolute;
+  //top: 60%;
+
+  .item {
+    text-align: left;
+  }
+
+  .danger {
+    color: var(--color-danger);
+  }
+}
+.labelPopupView{
+    background: white;
+    overflow: hidden;
+    border-radius: 12px;
+    padding: 12rpx;
+    box-sizing: border-box;
+
+    .btn-view {
+        display: flex;
         width: 100%;
-    }
-    video{
-        width: 100%;
-        height: 40%;
-    }
-    @media screen and (max-width: 1024px) {
-        width: 750rpx;
-        image{
-            height: 80%;
+        justify-content: flex-end;
+        align-items: flex-end;
+        padding: 12rpx;
+        box-sizing: border-box;
+
+        .label-btn {
+            margin: 0;
+            background: #f5f5f5;
+            color: black;
         }
     }
 }
-.folder-menu-back {
-    width: 100vw;
-    height: 100vh;
-    //background: rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    position: absolute;
-    top: 0;
+.labelPopup {
+  width: 1400rpx;
+  overflow: scroll;
+  overflow-x: hidden;
+  border-radius: 12rpx;
+  height: 80vh;
+  position: relative;
+
+  @media screen and (max-width: 1023px) {
+    width: 750rpx;
+    bottom: -40rpx;
     left: 0;
-}
-.menu-view {
-    width: 260upx;
-    position: absolute;
-    //top: 60%;
+    position: relative;
+    height: calc(90vh - 60px);
+  }
 
-    .item {
-        text-align: left;
-    }
-
-    .danger {
-        color: var(--color-danger);
-    }
 }
 </style>
