@@ -1,3 +1,5 @@
+import {getAuthorization} from "@/utils/auth";
+
 /**
  * Modal
  * @param options
@@ -16,3 +18,20 @@ export let showModal = (options:any|null) => new Promise((resolve, reject) => {
         }
     })
 })
+
+/**
+ * 检测是否登录状态
+ */
+
+export function checkLogin(){
+    if (!getAuthorization()) {
+        uni.showToast({
+            title: '请先登录',
+            icon: 'none'
+        })
+        uni.navigateTo({
+            url: "/pages/login/login"
+        })
+        return false
+    }
+}

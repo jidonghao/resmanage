@@ -89,6 +89,8 @@ let changePasswd = () => {
 .loginView {
   box-sizing: border-box;
   padding: 120upx 24upx;
+  width: 750rpx;
+  margin: 0 auto;
 }
 
 .submit {

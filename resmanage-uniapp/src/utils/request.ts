@@ -1,7 +1,7 @@
 import baseUrl from "../../baseUrl";
 
 
-export const request = ( url: string, method: 'POST' | 'GET', data: Object) => {
+export const request = ( url: string, method: 'POST' | 'GET', data?: Object|null) => {
     return new Promise((resolve, reject) => {
         uni.request({
             url: baseUrl + url,

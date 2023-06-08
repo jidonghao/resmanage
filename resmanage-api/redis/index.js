@@ -1,6 +1,10 @@
 import {createClient} from 'redis';
+import ENV from '../config/index.js'
 
-const client = createClient({url: "redis://127.0.0.1:6379"});
+const client = createClient({
+    url: `redis://${ENV.REDIS_URL}:${ENV.REDIS_PORT}`,
+    password:ENV.REDIS_PASSWORD
+});
 
 client.on("error", function (err) {
     console.error("redis初始化失败：" + err);

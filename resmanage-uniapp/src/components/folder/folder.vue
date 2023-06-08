@@ -1,32 +1,96 @@
 <template>
-  <view class="folder-folder" @longpress="showMenu">
-    <image class="folder-img" v-if="!props.imgPath&&!props.videoPath" src="@/static/icon/folder.svg"/>
+  <view class="folder-folder">
+    <image class="folder-img" v-if="determineFileType(props.fullType) === 'folder'" src="@/static/icon/folder.svg"/>
 
-    <view v-if="props.imgPath" class="folder-img-view">
-      <image class="isImg" mode="widthFix" :src="props.imgPath"/>
+    <view v-if="determineFileType(props.fullType) === 'image' " class="folder-img-view">
+      <image class="isImg" mode="widthFix" :src="props.filePath"/>
     </view>
 
-    <view v-if="props.videoPath" class="folder-img-view">
-      <image class="isImg isVideo" mode="widthFix" :src="props.videoPath"/>
+    <view v-if="determineFileType(props.fullType) === 'video' " class="folder-img-view">
+      <image class="isImg isVideo" mode="widthFix"
+             :src="props.filePath+'?spm=qipa250&x-oss-process=video/snapshot,t_7000,f_jpg,w_800,h_600,m_fast'"/>
       <image class="videoStart" mode="widthFix" src="@/static/icon/start-white.svg"/>
     </view>
 
-    <view v-if="!props.isNew" class="file-name">{{ props.fileName }}</view>
-    <textarea auto-height maxlength="24" class="file-name-input" v-else type="text" v-model="fileName" autofocus
-              confirm-type="done"/>
+    <image class="folder-img"
+           v-if="determineFileType(props.fullType) === '' "
+           src="@/static/icon/unknown-file.svg"/>
+
+
+    <view v-if="!props.isNew" class="file--name">
+      {{ props.fileName.substring(0, 30) }}
+    </view>
+
+
+    <textarea auto-height maxlength="24" class="file-name-input" v-else
+              type="text" v-model="fileName" autofocus
+              confirm-type="done" @input="fileNameChange" @focusout="completeEdit"/>
+
+<!--    <view class="folder-menu-back" v-if="props.showMenu" @click="closeMenu">-->
+<!--      <view class="menu menu-view" @click.stop="false">-->
+<!--        <view class="item">重命名</view>-->
+<!--        <view class="item danger" @click="deleteFile">删除</view>-->
+<!--      </view>-->
+<!--    </view>-->
   </view>
 </template>
 
 <script setup lang="ts">
 import {ref} from 'vue'
 
-const props = defineProps<{ id?: Number, fileName: String, imgPath?: String, videoPath?: String, isNew?: Boolean }>()
-let fileName = ref(props.fileName), showMenuFlag = ref(false)
-let showMenu = (e) => {
-  console.log(e)
-  showMenuFlag.value = true
-  e.preventDefault()
-  return false
+const props = defineProps<{
+  id?: Number, index: Number | String, fileName: String,
+  imgPath?: String, videoPath?: String, isNew?: Boolean,
+  showMenu: Boolean, filePath: String, typeDetail: String, fullType: String | null
+}>()
+const emit = defineEmits<{
+  onChange: (e: { value: String, index: String | Number }) => void,
+  completeAddFolder: () => void, completeEditFile:()=>void,
+  closeMenu: () => void,
+}>()
+const fileName = ref(props.fileName),
+    showMenuFlag = ref(false)
+
+function deleteFile() {
+
+}
+
+function determineFileType(typeDetail: string | null) {
+  let fileType = "";
+  if (!typeDetail) {
+    fileType = ""
+  } else if (typeDetail === 'folder') {
+    fileType = 'folder'
+  } else if (typeDetail.indexOf("image") !== -1) {
+    fileType = "image";
+  } else if (typeDetail.indexOf("video") !== -1) {
+    fileType = "video";
+  }
+  return fileType;
+}
+
+function closeMenu() {
+  emit('closeMenu')
+}
+
+// let showMenu = (e: any) => {
+//   console.log(e)
+//   showMenuFlag.value = true
+//   e.preventDefault()
+//   return false
+// }
+
+function completeEdit(e: any) {
+  console.log(111)
+  if(props.id)
+      emit('completeEditFile')
+  else
+    emit('completeAddFolder')
+}
+
+function fileNameChange(e: any) {
+  console.log(e.detail.value, props.index)
+  emit('onChange', {value: e.detail.value, index: props.index})
 }
 </script>
 
@@ -35,9 +99,11 @@ let showMenu = (e) => {
   cursor: pointer;
   padding: 12upx;
   margin: 12upx;
-  width: 170upx;
+  margin-right: 0;
+  width: 200upx;
+  max-width: 25vw;
   text-align: center;
-  display: flex;
+  display: inline-flex;
   position: relative;
   align-items: center;
   justify-content: flex-start;
@@ -56,7 +122,8 @@ let showMenu = (e) => {
   .folder-img-view {
     position: relative;
     width: 100%;
-    height: 140upx;
+    max-height: 140upx;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -67,6 +134,7 @@ let showMenu = (e) => {
     width: 140upx;
     max-height: 100%;
     border: 10upx double #d2d2d2;
+    box-sizing: border-box;
   }
 
   .isVideo {
@@ -79,8 +147,16 @@ let showMenu = (e) => {
     opacity: 0.9;
   }
 
-  .file-name, .file-name-input {
+  .file--name, .file-name-input {
     font-size: 26upx;
+  }
+
+  .file--name {
+    width: 180rpx;
+    display: inline-block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    height: auto;
   }
 
   .file-name-input {
@@ -88,9 +164,24 @@ let showMenu = (e) => {
     padding: 6upx 12upx;
     position: absolute;
     z-index: 9;
-    top: 140upx;
+    top: 150upx;
     background: rgba(240, 240, 240, 0.9);
     border-radius: 12upx;
   }
+
+  .menu-view {
+    width: 260upx;
+    position: absolute;
+    top: 60%;
+
+    .item {
+      text-align: left;
+    }
+
+    .danger {
+      color: var(--color-danger);
+    }
+  }
+
 }
 </style>

@@ -1,12 +1,11 @@
 import mysql from 'mysql'
-// 数据库配置在此文件
-import sqlSetting from './sql-setting.js'
-
+import ENV from "../config/index.js"
 let pool = mysql.createPool({
     connectionLimit: 10,
-    ...sqlSetting
-    // host:sqlSetting.,  user,			//默认情况下的用户名
-    // password, database			//连接的数据库名字
+    host:ENV.DB_HOST,
+    user:ENV.DB_USER,
+    password:ENV.DB_PASSWORD,
+    database:ENV.DB_DATABASE
 })
 
 /***

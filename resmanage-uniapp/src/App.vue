@@ -4,6 +4,13 @@ import routingIntercept from '@/utils/permission'
 onLaunch(() => {
   routingIntercept()
   console.log("App Launch");
+
+// #ifdef H5
+  uni.hideTabBar({
+      animation: false
+  })
+// #endif
+
 });
 onShow(() => {
   console.log("App Show");
