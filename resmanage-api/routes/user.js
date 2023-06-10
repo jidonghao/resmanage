@@ -21,12 +21,19 @@ router.post('/register', async (req, res, next) => {
     let {passwd, username, nickname} = req.body;
     if (!username ||!passwd || !nickname ) {
         res.json(resJson(601, '参数不对'))
-    } else if (passwd.length < 6 || passwd.length > 20|| username.length < 1 || username.length > 20) { //
+    } else if (passwd.length < 6 || passwd.length > 20|| username.length < 1 || username.length > 20) {
         res.json(resJson(600, 'error'))
     } else {
         try {
+            // check if the username already exists
+            let userExists = await login.checkUserExists(username);
+            if(userExists) {
+                res.json(resJson(601, '用户名已存在，请换一个试试'));
+                return;
+            }
+
             passwd = CryptoJS.AES.encrypt(passwd, ENV.PASSWORD_KEY).toString()
-            let sqlBack = await login.createUser( username, nickname, passwd);
+            let sqlBack = await login.createUser(username, nickname, passwd);
             setToken(username, sqlBack.insertId).then(async (data) => {
                 res.json(resJson(0, '登录成功', {
                     token: data,

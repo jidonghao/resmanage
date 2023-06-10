@@ -5,6 +5,13 @@ import ENV from "../../config/index.js";
 
 let login = {
     // queryByPhoneNumber: (phoneNumber, passwd) => sql(`select phone_number,passwd,identity,id,nick_name,avatar from user where phone_number = ${phoneNumber} and deleted = 0`),
+    checkUserExists: (username) => {
+        return sql(`
+        SELECT COUNT(*) as count FROM user WHERE username = ?
+    `, [username]).then(data => {
+            return data[0].count > 0;
+        });
+    },
     queryByUsername: (user, passwd) => sql(`select * from user where username = ? and deleted = 0`, [user]),
     createUser: (userName, nickName, passwd='') => {
         let addTime = tools.formatDate(new Date().getTime())
