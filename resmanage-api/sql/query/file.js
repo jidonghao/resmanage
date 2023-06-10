@@ -10,22 +10,24 @@ let file = {
      * @param limit 一页几条
      * @param folderId 文件夹id
      * @param fileName 文件名
+     * @param labelIds 标签id数组
      * @returns {Promise<*>}
      */
-    getFileList: (userId, page, limit, folderId, fileName) => {
+    getFileList: (userId, page, limit, folderId, fileName, labelIds) => {
         let count = 0;
         let fileNameQuery = fileName ? ["AND file_name LIKE ?", [`%${fileName}%`]] : ['', []];
-        return sql(`SELECT COUNT(*) FROM res_file WHERE deleted = 0 AND user_id = ? AND folder_id = ? ${fileNameQuery[0]}`, [userId, folderId, ...fileNameQuery[1]])
+        let labelQuery = (Array.isArray(labelIds) && labelIds.length > 0) ? ["AND id IN (SELECT file_id FROM res_file_label WHERE label_id IN (?) AND user_id = ? GROUP BY file_id HAVING COUNT(file_id) = ?)", [labelIds, userId, labelIds.length]] : ['', []];
+        return sql(`SELECT COUNT(*) FROM res_file WHERE deleted = 0 AND user_id = ? AND folder_id = ? ${fileNameQuery[0]} ${labelQuery[0]}`, [userId, folderId, ...fileNameQuery[1], ...labelQuery[1]])
             .then(data => {
                 count = data[0]['COUNT(*)'];
-                let params = [userId, folderId, ...fileNameQuery[1], (page - 1) * limit, limit];
+                let params = [userId, folderId, ...fileNameQuery[1], ...labelQuery[1], (page - 1) * limit, limit];
                 // When fileName is null or '', fileNameQuery[1] is empty, so we need to remove it from params
                 params = params.filter((item, index) => {
                     return !(index === 2 && item.length === 0);
                 });
                 return sql(`
 SELECT id,type,type_detail as typeDetail, file_name as fileName,file_path as filePath,full_type as fullType,add_time as addTime,update_time as updateTime 
-FROM res_file WHERE deleted = 0 AND user_id = ? AND folder_id = ? ${fileNameQuery[0]} 
+FROM res_file WHERE deleted = 0 AND user_id = ? AND folder_id = ? ${fileNameQuery[0]} ${labelQuery[0]} 
 ORDER BY 
 CASE WHEN full_type = 'folder' THEN 1 ELSE 2 END, 
 update_time DESC 
@@ -55,6 +57,7 @@ LIMIT ?,?`, params);
                 return Promise.resolve({list: fileList, total: count, page, limit, pages: Math.ceil(count / limit)})
             });
     },
+
 
 
     /**

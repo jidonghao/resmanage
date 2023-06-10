@@ -26,6 +26,7 @@ const router = express.Router();
  * @apiSuccess {Number} page 第几页
  * @apiSuccess {Number} pages 总页数
  * @apiSuccess {Object[]} list 返回数组
+ * @apiSuccess {number[]} labelIds 标签的id数组
  * @apiSuccessExample  {json} success-example
  * {
  * 	"list": [
@@ -47,21 +48,30 @@ const router = express.Router();
  * }
  */
 router.get('/query', (req, res, next) => {
-    let {id = ''} = req.data
-    let {page, limit, folderId = null, fileName = ''} = req.query
-    page = parseInt(page)
-    limit = parseInt(limit)
-    page = page ? page : 1
-    limit = limit ? limit : 20
-    folderId = folderId ?? -1
+    let { id = '' } = req.data;
+    let { page, limit, folderId = null, fileName = '', labelIds = "" } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    page = page ? page : 1;
+    limit = limit ? limit : 20;
+    folderId = folderId ?? -1;
+    if (!/^\d*(,\d*)*$/.test(labelIds)) {
+        res.json(resJson(-1, '失败，参数错误'))
+        return;
+    }
+
+    if(!labelIds)
+        labelIds = []
+    else
+        labelIds = labelIds.split(",").map(v=>+v)
+    console.log(labelIds)
     if (id) {
-        file.getFileList(id, page, limit, folderId, fileName).then(data => {
+        file.getFileList(id, page, limit, folderId, fileName, labelIds).then(data => {
             res.json(resJson(0, '成功', data))
         }).catch(err => {
             console.error("getFolder:", err)
             res.json(resJson(500, '系统内部错误'))
             logger.error(`"错误getFolder：", ${JSON.stringify(err)}`)
-
         })
     } else {
         res.json(resJson(-1, '失败，没有找到指定用户'))
@@ -205,7 +215,7 @@ router.post('/addLabel', (req, res, next) => {
 });
 
 /**
- * @api {POST} /api/file/removeLabel 从文件中删除标签
+ * @api {POST} /api/file/removeLabelFromItem 从文件中删除标签
  * @apiGroup file
  * @apiDescription 从指定文件中删除标签
  * @apiVersion 1.0.0

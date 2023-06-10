@@ -1,7 +1,7 @@
 <template>
     <view class="global--container" @contextmenu.prevent="false">
         <view class="nav-style"
-              :style="{'height':statusBar.navHeight+'px','padding-top':statusBar.statusBarHeight+'px'}"
+              :style="{'height':(statusBar.navHeight+((showFilter&&labelPopupPlace==='bottom')?filterHeight:0))+'px','padding-top':statusBar.statusBarHeight+'px'}"
               @click="closeMenu">
             <view class="leftControl" @click="goBackFolder">
                 <uni-icons type="back" size="24" style="margin-left: 10upx" v-if="folderShowList.length>1"/>
@@ -10,11 +10,18 @@
                 </view>
             </view>
             <view class="rightControl" :class="{'scaleRightControl':folderShowList.length>1}">
-                <view class="searchInput">
-                    <uni-easyinput suffixIcon="search" type="text" v-model="formQuery.fileName" placeholder="搜索文件名"
-                                   @iconClick.stop="search" @confirm="search" confirm-type="search"/>
-
+                <view class="search-filter--view">
+                    <view class="searchInput">
+                        <uni-easyinput suffixIcon="search" type="text" v-model="formQuery.fileName" placeholder="搜索文件名"
+                                       @iconClick.stop="search" @confirm="search" confirm-type="search"/>
+                    </view>
+                    <view class="search--filter" v-if="showFilter">
+                        <select-cy ref="selectCyRef" :value="filterSelectValue" placeholder="请选择标签" :showClearIcon="true"
+                                   :options="labelList" @change="selectCYChange"
+                                   slabel="labelName"  svalue="id"/>
+                    </view>
                 </view>
+
                 <view class="filterBtn" @click.stop="showMenuHandler"
                       :style="showMenu?'--background-color: dodgerblue':''">
                     <view v-for="i in 3" :key="i"/>
@@ -28,7 +35,7 @@
             </view>
         </view>
         <scroll-view class="container" :refresher-threshold="100" :scroll-y="enableScroll"
-                     :style="`padding-top:${statusBar.navHeight}px;`"
+                     :style="`padding-top:${statusBar.navHeight+((showFilter&&labelPopupPlace==='bottom')?filterHeight:0)}px;`"
                      refresher-enabled :refresher-triggered="refreshing" @refresherpulling="pullDown"
                      @scrolltolower="getMoreList" lower-threshold="100px" @click="completeAddFolder">
             <view class="scroll-container">
@@ -101,6 +108,8 @@ import {uploadFile} from "@/api/upload";
 import eventBus from "@/utils/event-bus";
 import IsEmpty from "@/components/isEmpty/isEmpty.vue";
 
+const filterHeight = ref(40),showFilter = ref(false)
+
 let statusBar = ref({statusBarHeight: 1, navHeight: 1})
 
 onLoad(() => {
@@ -109,16 +118,19 @@ onLoad(() => {
     statusBar.value.navHeight = statusBarHeight + (system.indexOf('iOS') > -1 ? 44 : 48)
 })
 
-let formQuery = ref({
-        page: 1, limit: 100, folderId: -1, fileName: ""
-    }),
+const formQuery = ref<{page:number, limit: number, folderId: number, fileName: string,labelIds:Array<any>|string}>({
+    page: 1, limit: 100, folderId: -1, fileName: "",labelIds:[]
+}),
     total = ref(0), pages = ref(0), list = ref<any[]>([]), refreshing = ref(false),
     queryFolderIdList: Number[] = [-1],
     fileList: any = ref([]),
     queryGetList = (showTips = false) => {
         formQuery.value.folderId = folderShowList.value[folderShowList.value.length - 1].id
 
-        file.queryFile(unref(formQuery)).then((res: any) => {
+        // const formQuerySet = unref(formQuery)
+        // formQuerySet.labelIds = formQuerySet.labelIds instanceof Array ? formQuerySet.labelIds.join(','):''
+
+        file.queryFile({...unref(formQuery),labelIds:formQuery.value.labelIds instanceof Array ? formQuery.value.labelIds.join(','):''}).then((res: any) => {
             if (formQuery.value.page === 1) {
                 fileList.value = res.list
             } else {
@@ -186,6 +198,7 @@ function fileMenuFun(e: any) {
 }
 
 function completeEditFile() {
+    if(selectItemIndex.value===-1)return false
     if (!fileList.value[selectItemIndex.value].fileName) {
         showModal({content: '文件名不能为空', showCancel: false}).then(() => {
 
@@ -273,10 +286,27 @@ function setLabelPopupPlace() {
         labelPopupPlace.value = 'bottom'
     }
 }
+const labelList = ref<any>([]), selectCyRef = ref<any>()
+function getLabelList(showTips = false) {
+    file.getLabels().then((res: any) => {
+        labelList.value = res.labels
+    }).catch(err => {})
+}
+const filterSelectValue = ref<any>([])
+function selectCYChange(e:any,f:any){
+    formQuery.value.labelIds = e.map((item:any)=>{
+        return item.id
+    })
+    formQuery.value.page = 1
+    queryGetList(true)
+    selectCyRef.value.close()
+}
 
 onReady(() => {
+    setLabelPopupPlace()
     window.addEventListener("resize", setLabelPopupPlace)
     queryGetList()
+    getLabelList()
     eventBus.on('onUploadProgress', (response: any) => {
         const res = response.res
         console.log('上传进度' + response.progress);
@@ -364,7 +394,8 @@ let searchValue = ref(""),
 const topMenuOptions = ref([
     // {label.vue: "选择", value: 0},
     {label: "新建文件夹", value: 1},
-    {label: "上传文件", value: 2, hideBorder: true}
+    {label: "上传文件", value: 2},
+    {label: "高级搜索", value: 3, hideBorder: true}
 ])
 const isAddFolder = ref(false) // 是否正新增文件夹
 let editFileIndex = -1
@@ -426,6 +457,14 @@ let closeMenu = () => {
                 break
             case 2:
                 uploadFileFun()
+                break
+            case 3:
+                topMenuOptions.value[2].label = (showFilter.value = !showFilter.value) ? "取消高级搜索":(()=>{
+                    formQuery.value.labelIds = []
+                    formQuery.value.page = 1
+                    queryGetList()
+                    return "高级搜索"
+                })()
                 break
         }
     }
@@ -548,6 +587,7 @@ function uploadFileFun() {
   align-items: center;
   box-sizing: border-box;
   padding: 0 12upx;
+    transition: all 0.2s;
 
   @media screen and (min-width: 1023px) {
     width: calc(100vw - 60px);
@@ -583,20 +623,42 @@ function uploadFileFun() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 750rpx;
     transition: all 0.2s;
+      width: 1200rpx;
+      @media screen and (max-width: 1023px) {
+          width: 750rpx;
+
+      }
+
+      .search-filter--view{
+          margin-left: 24upx;
+          width: 90%;
+          display: flex;
+          flex-direction: row;
+          @media screen and (max-width: 1023px) {
+              flex-direction: column;
+          }
+      }
 
     .searchInput {
-      margin-left: 24upx;
+      //margin-left: 24upx;
       width: 100%;
     }
 
     .filterBtn {
       flex-shrink: 0;
     }
+
+      .search--filter{
+          width: 100%;
+          margin-left: 12rpx;
+          @media screen and (max-width: 1023px) {
+            margin: 4rpx 0 0;
+          }
+      }
   }
 
-  .scaleRightControl {
+  .search-filter--view {
     @media screen and (max-width: 1023px) {
       width: 500rpx;
     }
