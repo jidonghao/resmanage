@@ -182,7 +182,7 @@ function fileMenuFun(e: any) {
             // 执行删除操作
             showModal({title: '提示', content: '确定要删除吗？'}).then(() => {
                 file.deleteFile({fileId: fileList.value[selectItemIndex.value].id}).then(() => {
-                    uni.showToast({title: '删除'})
+                    uni.showToast({title: '删除成功'})
                     fileList.value.splice(selectItemIndex.value, 1)
                 }).catch((err: any) => {
                     showModal({content: err.errMsg || '操作失败，请稍后重试',}).then(() => {
@@ -828,15 +828,15 @@ function uploadFileFun() {
   overflow: scroll;
   overflow-x: hidden;
   border-radius: 12rpx;
-  height: 80vh;
+  height: 60vh;
   position: relative;
 
   @media screen and (max-width: 1023px) {
     width: 750rpx;
-    bottom: -40rpx;
+    bottom: 0;
     left: 0;
     position: relative;
-    height: calc(90vh - 60px);
+    height: calc(70vh - 60px);
   }
 
 }

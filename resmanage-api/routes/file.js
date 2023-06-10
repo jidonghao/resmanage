@@ -64,7 +64,6 @@ router.get('/query', (req, res, next) => {
         labelIds = []
     else
         labelIds = labelIds.split(",").map(v=>+v)
-    console.log(labelIds)
     if (id) {
         file.getFileList(id, page, limit, folderId, fileName, labelIds).then(data => {
             res.json(resJson(0, '成功', data))

@@ -1,20 +1,22 @@
 <template>
-  <view class="contain">
-    <arrow-list title="头像" showLine>
-      <image class="avatar" :src="avatar"></image>
-    </arrow-list>
-    <view @click="goPage('/pages/my/myInfo/changeNickname')">
-      <arrow-list title="昵称" showLine :value="nickName"/>
-    </view>
-    <view @click="goPage('/pages/my/myInfo/changePhoneNumber')">
-      <arrow-list title="手机号" :value="phoneNumber"/>
-    </view>
-    <view @click="goPage('/pages/my/myInfo/changePasswd')">
-      <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
-    </view>
+    <view class="contain">
+        <view @click="goPage('/pages/my/myInfo/changeAvatar')">
+            <arrow-list title="头像" showLine>
+                <image class="avatar" :src="avatar"></image>
+            </arrow-list>
+        </view>
+        <view @click="goPage('/pages/my/myInfo/changeNickname')">
+            <arrow-list title="昵称" showLine :value="nickName"/>
+        </view>
+        <!--    <view @click="goPage('/pages/my/myInfo/changePhoneNumber')">-->
+        <!--      <arrow-list title="手机号" :value="phoneNumber"/>-->
+        <!--    </view>-->
+        <view @click="goPage('/pages/my/myInfo/changePasswd')">
+            <arrow-list title="密码" :value="hasPasswd?'已设置':'未设置'"/>
+        </view>
 
-    <view class="logout" @click="logout">退出登录</view>
-  </view>
+        <view class="logout" @click="logout">退出登录</view>
+    </view>
 </template>
 
 <script setup lang="ts">
@@ -30,25 +32,25 @@ let nickName = ref(''),
     hasPasswd = ref(false)
 
 onShow(() => {
-  let userInfo = uni.getStorageSync("userInfo")
-  nickName.value = userInfo.nickName
-  phoneNumber.value = userInfo.phoneNumber
-  avatar.value = userInfo.avatar
-  hasPasswd.value = userInfo.hasPasswd
+    let userInfo = uni.getStorageSync("userInfo")
+    nickName.value = userInfo.nickName
+    phoneNumber.value = userInfo.phoneNumber
+    avatar.value = userInfo.avatar
+    hasPasswd.value = userInfo.hasPasswd
 });
 let goPage = (url: String) => {
-  uni.navigateTo({url})
+    uni.navigateTo({url})
 }
 /**
  * 登出
  */
 let logout = () => {
-  showModal({content: "确定要退出登录吗？"}).then(() => {
-    removeAuthorization()
-    uni.removeStorageSync('userInfo')
-    uni.redirectTo({url: '/pages/login/login'})
-  }).catch(() => {
-  })
+    showModal({content: "确定要退出登录吗？"}).then(() => {
+        removeAuthorization()
+        uni.removeStorageSync('userInfo')
+        uni.redirectTo({url: '/pages/login/login'})
+    }).catch(() => {
+    })
 }
 </script>
 
