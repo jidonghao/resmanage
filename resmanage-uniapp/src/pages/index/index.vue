@@ -101,7 +101,7 @@
 import file from "@/api/file";
 // import forder from "../../components/folder/folder.vue"
 import {ref, unref} from 'vue'
-import {onLoad, onReady} from "@dcloudio/uni-app";
+import {onLoad, onReady, onShow} from "@dcloudio/uni-app";
 import login from "@/api/login";
 import {downloadFile, showModal} from "@/utils/utils";
 import {uploadFile} from "@/api/upload";
@@ -306,7 +306,6 @@ onReady(() => {
     setLabelPopupPlace()
     window.addEventListener("resize", setLabelPopupPlace)
     queryGetList()
-    getLabelList()
     eventBus.on('onUploadProgress', (response: any) => {
         const res = response.res
         console.log('上传进度' + response.progress);
@@ -314,7 +313,9 @@ onReady(() => {
         console.log('预期需要上传的数据总长度' + res.totalBytesExpectedToSend);
     })
 })
-
+onShow(()=>{
+    getLabelList()
+})
 const folderShowList = ref([
     {label: '/', id: -1}
 ])
