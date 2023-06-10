@@ -52,8 +52,8 @@ router.post('/register', async (req, res, next) => {
             })
         } catch (err) {
             res.status(400).json(resJson(500, 'error'));
-            console.error("从redis通过手机号获取验证码错误(几乎不会错误，除非redis)：", err);
-            logger.error(`从redis通过手机号获取验证码错误(几乎不会错误，除非redis)：${JSON.stringify(err)}`)
+            console.error("注册错误", err);
+            logger.error(`注册错误：${JSON.stringify(err)}`)
         }
     }
 });
