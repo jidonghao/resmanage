@@ -375,11 +375,13 @@ let clickFile = (event: any, item: any) => {
         case 'video': // video
             previewPopup.value.open()
             nowDisplayItem.value = {...item, type}
+            file.updateQueryTime({fileId:item.id})
             break
         default:
             uni.showToast({
                 title: '该文件类型暂不支持在线预览', icon: 'none'
             })
+            file.updateQueryTime({fileId:item.id})
             break
     }
 }
