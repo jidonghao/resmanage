@@ -3,6 +3,8 @@
 ## 项目介绍
 
 这是一个基于Vue、uniapp、TypeScript、Express.js、Node.js 和 MySQL 的开源项目。它旨在实现一个基于web的多媒体资源管理系统。
+[在线体验地址](https://res.dhxt.fun)  
+[查看截图](https://github.com/jidonghao/resmanage/tree/master/document)  
 
 ## 技术栈
 
