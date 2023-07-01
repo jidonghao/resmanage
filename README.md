@@ -3,6 +3,7 @@
 ## 项目介绍
 
 这是一个基于Vue、uniapp、TypeScript、Express.js、Node.js 和 MySQL 的开源项目。它旨在实现一个基于web的多媒体资源管理系统。  
+支持上传、下载和在线浏览的功能。  
 [在线体验地址](https://res.dhxt.fun)  
 [查看截图](https://github.com/jidonghao/resmanage/tree/master/document)  
 
@@ -21,7 +22,7 @@
 git clone https://github.com/jidonghao/resmanage
 ```
 
-2. 根据resmanage-sql中的表结构与数据初始化MySQL数据库，并将 `resmanage-api/env.temp`拷贝并修改配置，重命名为.env.xx
+2. 根据resmanage-sql中的表结构与数据初始化MySQL数据库，并将 `resmanage-api/env.temp`拷贝并修改配置，重命名为.env.xx (本地运行修改为`.env.dev`，生产修改为`.env.production`。package.json可自定义)
 
 3. 进入后端项目目录：
 ```
@@ -56,7 +57,7 @@ npm install
 yarn install
 ```
 
-8. 运行前端：
+8. 运行前端(或其他package.json已有的脚本)：
 ```
 npm run dev:h5
 ```
