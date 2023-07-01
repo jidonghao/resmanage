@@ -22,7 +22,7 @@
 git clone https://github.com/jidonghao/resmanage
 ```
 
-2. 根据resmanage-sql中的表结构与数据初始化MySQL数据库，并将 `resmanage-api/env.temp`拷贝并修改配置，重命名为.env.xx (本地运行修改为`.env.dev`，生产修改为`.env.production`。package.json可自定义)
+2. 根据resmanage-sql中的表结构与数据初始化MySQL数据库，并将 `resmanage-api/env.temp`拷贝并修改配置，重命名为.env.xx (本地运行修改为`.env.dev`，生产修改为`.env.production`。可以在package.json中自定义)
 
 3. 进入后端项目目录：
 ```
