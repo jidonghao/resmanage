@@ -91,15 +91,10 @@ pipeline {
               [$class: 'CleanBeforeCheckout']
             ]
           ])
-          script {
-            env.RELEASE_GIT_COMMIT = sh(
-              returnStdout: true,
-              script: "git rev-parse HEAD"
-            ).trim()
-          }
           sh '''
             set -eu
-            printf '%s' "${RELEASE_GIT_COMMIT}" | grep -Eq '^[a-f0-9]{40}$'
+            git rev-parse HEAD > ../.release-git-commit
+            grep -Eq '^[a-f0-9]{40}$' ../.release-git-commit
             test -f Dockerfile
           '''
         }
@@ -137,8 +132,13 @@ pipeline {
       steps {
         script {
           beginReleaseStep('BUILD')
-          env.RELEASE_IMAGE_TAG = "r${params.RELEASE_ID}-${env.RELEASE_GIT_COMMIT.take(12)}"
         }
+        sh '''
+          set -eu
+          git_commit="$(cat .release-git-commit)"
+          printf 'r%s-%.12s\n' "${RELEASE_ID}" "${git_commit}" > .release-image-tag
+          grep -Eq '^r[0-9]+-[a-f0-9]{12}$' .release-image-tag
+        '''
         withCredentials([usernamePassword(
           credentialsId: env.REGISTRY_CREDENTIAL_ID,
           usernameVariable: 'REGISTRY_USERNAME',
@@ -149,6 +149,9 @@ pipeline {
               set +x
               set -eu
               umask 077
+              RELEASE_GIT_COMMIT="$(cat .release-git-commit)"
+              RELEASE_IMAGE_TAG="$(cat .release-image-tag)"
+              export RELEASE_GIT_COMMIT RELEASE_IMAGE_TAG
               auth="$(printf '%s:%s' "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" | base64 | tr -d '\n')"
               printf '{"auths":{"%s":{"auth":"%s"}}}\n' \
                 "$(printf '%s' "${IMAGE_REPOSITORY}" | cut -d/ -f1)" "${auth}" \
@@ -177,7 +180,6 @@ pipeline {
           }
         }
         script {
-          env.RELEASE_IMAGE_DIGEST = readFile('.product-image-digest').trim()
           sendReleaseCallback('BUILD', 'SUCCEEDED')
           beginReleaseStep('PUSH')
           sendReleaseCallback('PUSH', 'SUCCEEDED')
@@ -190,11 +192,9 @@ pipeline {
         expression { params.RELEASE_KIND == 'ROLLBACK' }
       }
       steps {
-        script {
-          env.RELEASE_GIT_COMMIT = params.GIT_COMMIT_SHA
-          env.RELEASE_IMAGE_TAG = params.IMAGE_TAG
-          env.RELEASE_IMAGE_DIGEST = params.IMAGE_DIGEST
-        }
+        writeFile(file: '.release-git-commit', text: "${params.GIT_COMMIT_SHA}\n")
+        writeFile(file: '.release-image-tag', text: "${params.IMAGE_TAG}\n")
+        writeFile(file: '.product-image-digest', text: "${params.IMAGE_DIGEST}\n")
       }
     }
 
@@ -224,6 +224,9 @@ pipeline {
         container('helm') {
           sh '''
             set -eu
+            RELEASE_IMAGE_TAG="$(cat .release-image-tag)"
+            RELEASE_IMAGE_DIGEST="$(cat .product-image-digest)"
+            export RELEASE_IMAGE_TAG RELEASE_IMAGE_DIGEST
             previous_revision=0
             if helm status "${HELM_RELEASE}" --namespace "${NAMESPACE}" >/dev/null 2>&1; then
               previous_revision="$(helm history "${HELM_RELEASE}" --namespace "${NAMESPACE}" \
@@ -255,7 +258,6 @@ pipeline {
           '''
         }
         script {
-          env.RELEASE_HELM_REVISION = readFile('.helm-revision').trim()
           sendReleaseCallback('HELM_UPGRADE', 'SUCCEEDED')
         }
       }
