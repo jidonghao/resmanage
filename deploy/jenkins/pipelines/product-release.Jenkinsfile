@@ -10,6 +10,12 @@ def sendReleaseCallback(String stepKey, String status) {
   }
 }
 
+def beginReleaseStep(String stepKey) {
+  env.CURRENT_RELEASE_STEP = stepKey
+  writeFile(file: '.current-release-step', text: stepKey)
+  sendReleaseCallback(stepKey, 'RUNNING')
+}
+
 pipeline {
   agent {
     label 'forge-build'
@@ -46,11 +52,9 @@ pipeline {
       steps {
         script {
           if (params.RELEASE_KIND == 'ROLLBACK') {
-            env.CURRENT_RELEASE_STEP = 'PREPARE'
-            sendReleaseCallback('PREPARE', 'RUNNING')
+            beginReleaseStep('PREPARE')
           } else {
-            env.CURRENT_RELEASE_STEP = 'CHECKOUT'
-            sendReleaseCallback('CHECKOUT', 'RUNNING')
+            beginReleaseStep('CHECKOUT')
           }
         }
         sh '''
@@ -66,7 +70,7 @@ pipeline {
             grep -Eq '^[0-9]+:[0-9]+:[0-9]+:[0-9]+:[0-9]+$'
           test "${REPLICAS}" -ge 2
           test "${REPLICAS}" -le 100
-          case "${IMAGE_TAG}" in latest|stable|main|master) exit 2 ;; esac
+          case "${IMAGE_TAG:-}" in latest|stable|main|master) exit 2 ;; esac
           if [ "${RELEASE_KIND}" = ROLLBACK ]; then
             printf '%s' "${IMAGE_DIGEST}" | grep -Eq '^sha256:[a-f0-9]{64}$'
             printf '%s' "${IMAGE_TAG}" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
@@ -88,8 +92,7 @@ pipeline {
       }
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'CHECKOUT'
-          sendReleaseCallback('CHECKOUT', 'RUNNING')
+          beginReleaseStep('CHECKOUT')
         }
         dir('product-source') {
           deleteDir()
@@ -126,8 +129,7 @@ pipeline {
       }
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'TEST'
-          sendReleaseCallback('TEST', 'RUNNING')
+          beginReleaseStep('TEST')
         }
         dir('product-source') {
           sh '''
@@ -148,9 +150,8 @@ pipeline {
       }
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'BUILD'
+          beginReleaseStep('BUILD')
           env.RELEASE_IMAGE_TAG = "r${params.RELEASE_ID}-${env.RELEASE_GIT_COMMIT.take(12)}"
-          sendReleaseCallback('BUILD', 'RUNNING')
         }
         withCredentials([usernamePassword(
           credentialsId: env.REGISTRY_CREDENTIAL_ID,
@@ -192,8 +193,7 @@ pipeline {
         script {
           env.RELEASE_IMAGE_DIGEST = readFile('.product-image-digest').trim()
           sendReleaseCallback('BUILD', 'SUCCEEDED')
-          env.CURRENT_RELEASE_STEP = 'PUSH'
-          sendReleaseCallback('PUSH', 'RUNNING')
+          beginReleaseStep('PUSH')
           sendReleaseCallback('PUSH', 'SUCCEEDED')
         }
       }
@@ -218,8 +218,7 @@ pipeline {
       }
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'MIGRATE'
-          sendReleaseCallback('MIGRATE', 'RUNNING')
+          beginReleaseStep('MIGRATE')
           sh '''
             set -eu
             if [ -f product-source/ci/migrate-expand.sh ]; then
@@ -234,8 +233,7 @@ pipeline {
     stage('Helm atomic rolling release') {
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'HELM_UPGRADE'
-          sendReleaseCallback('HELM_UPGRADE', 'RUNNING')
+          beginReleaseStep('HELM_UPGRADE')
         }
         container('helm') {
           sh '''
@@ -280,8 +278,7 @@ pipeline {
     stage('Wait for rollout') {
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'ROLLOUT'
-          sendReleaseCallback('ROLLOUT', 'RUNNING')
+          beginReleaseStep('ROLLOUT')
         }
         container('kubectl') {
           sh '''
@@ -299,8 +296,7 @@ pipeline {
     stage('HTTP smoke test') {
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = 'SMOKE'
-          sendReleaseCallback('SMOKE', 'RUNNING')
+          beginReleaseStep('SMOKE')
         }
         container('kubectl') {
           sh '''
@@ -325,13 +321,15 @@ pipeline {
     failure {
       script {
         try {
-          sendReleaseCallback(env.CURRENT_RELEASE_STEP, 'FAILED')
+          def fallbackStep = params.RELEASE_KIND == 'ROLLBACK' ? 'PREPARE' : 'CHECKOUT'
+          def failedStep = fileExists('.current-release-step') ?
+            readFile('.current-release-step').trim() : fallbackStep
+          sendReleaseCallback(failedStep, 'FAILED')
         } catch (ignored) {
           echo 'Failed step callback was not acknowledged'
         }
-        env.CURRENT_RELEASE_STEP = 'ROLLBACK'
         try {
-          sendReleaseCallback('ROLLBACK', 'RUNNING')
+          beginReleaseStep('ROLLBACK')
           container('helm') {
             sh '''
               set -eu
