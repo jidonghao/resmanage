@@ -1,0 +1,7 @@
+apiVersion: v2
+name: product-service
+description: Restricted rolling-release chart for one product HTTP service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+kubeVersion: ">=1.29.0-0"
