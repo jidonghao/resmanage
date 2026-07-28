@@ -45,8 +45,13 @@ pipeline {
     stage('Validate registered release') {
       steps {
         script {
-          env.CURRENT_RELEASE_STEP = params.RELEASE_KIND == 'ROLLBACK' ? 'PREPARE' : 'CHECKOUT'
-          sendReleaseCallback(env.CURRENT_RELEASE_STEP, 'RUNNING')
+          if (params.RELEASE_KIND == 'ROLLBACK') {
+            env.CURRENT_RELEASE_STEP = 'PREPARE'
+            sendReleaseCallback('PREPARE', 'RUNNING')
+          } else {
+            env.CURRENT_RELEASE_STEP = 'CHECKOUT'
+            sendReleaseCallback('CHECKOUT', 'RUNNING')
+          }
         }
         sh '''
           set -eu
@@ -68,7 +73,11 @@ pipeline {
           fi
         '''
         script {
-          sendReleaseCallback(env.CURRENT_RELEASE_STEP, 'SUCCEEDED')
+          if (params.RELEASE_KIND == 'ROLLBACK') {
+            sendReleaseCallback('PREPARE', 'SUCCEEDED')
+          } else {
+            sendReleaseCallback('CHECKOUT', 'SUCCEEDED')
+          }
         }
       }
     }
