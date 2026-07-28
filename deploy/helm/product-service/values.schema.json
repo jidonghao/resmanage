@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "serviceKey", "replicaCount", "image", "containerPort", "service",
+    "deployment", "terminationGracePeriodSeconds", "lifecycle", "probes",
+    "resources", "pdb", "topologySpread", "podSecurityContext",
+    "containerSecurityContext"
+  ],
+  "properties": {
+    "serviceKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}$"
+    },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 100
+    },
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag", "digest", "pullPolicy"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._-]+)+$"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+          "not": { "enum": ["latest", "stable", "main", "master"] }
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "service": {
+      "type": "object",
+      "required": ["port"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "required": ["minReadySeconds", "progressDeadlineSeconds", "revisionHistoryLimit", "strategy"],
+      "properties": {
+        "minReadySeconds": { "type": "integer", "minimum": 0 },
+        "progressDeadlineSeconds": { "type": "integer", "minimum": 60 },
+        "revisionHistoryLimit": { "type": "integer", "minimum": 2 },
+        "strategy": {
+          "type": "object",
+          "required": ["maxUnavailable", "maxSurge"],
+          "properties": {
+            "maxUnavailable": { "const": 0 },
+            "maxSurge": { "const": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "terminationGracePeriodSeconds": { "type": "integer", "minimum": 10 },
+    "lifecycle": { "type": "object" },
+    "probes": { "type": "object" },
+    "resources": {
+      "type": "object",
+      "required": ["requests", "limits"],
+      "properties": {
+        "requests": {
+          "type": "object",
+          "required": ["cpu", "memory"]
+        },
+        "limits": {
+          "type": "object",
+          "required": ["cpu", "memory"]
+        }
+      }
+    },
+    "pdb": {
+      "type": "object",
+      "required": ["minAvailable"],
+      "properties": {
+        "minAvailable": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "topologySpread": { "type": "object" },
+    "podSecurityContext": { "type": "object" },
+    "containerSecurityContext": { "type": "object" },
+    "env": { "type": "array" },
+    "envFrom": { "type": "array" },
+    "writableVolumes": { "type": "array" }
+  }
+}
