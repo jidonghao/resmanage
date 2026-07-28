@@ -145,39 +145,41 @@ pipeline {
           usernameVariable: 'REGISTRY_USERNAME',
           passwordVariable: 'REGISTRY_PASSWORD'
         )]) {
-          container('buildkit') {
-            sh '''
-              set +x
-              set -eu
-              umask 077
-              RELEASE_GIT_COMMIT="$(cat .release-git-commit)"
-              RELEASE_IMAGE_TAG="$(cat .release-image-tag)"
-              export RELEASE_GIT_COMMIT RELEASE_IMAGE_TAG
-              auth="$(printf '%s:%s' "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" | base64 | tr -d '\n')"
-              printf '{"auths":{"%s":{"auth":"%s"}}}\n' \
-                "$(printf '%s' "${IMAGE_REPOSITORY}" | cut -d/ -f1)" "${auth}" \
-                > "${DOCKER_CONFIG}/config.json"
-              unset auth REGISTRY_USERNAME REGISTRY_PASSWORD
-              trap 'rm -f "${DOCKER_CONFIG}/config.json"' EXIT
+          retry(3) {
+            container('buildkit') {
+              sh '''
+                set +x
+                set -eu
+                umask 077
+                RELEASE_GIT_COMMIT="$(cat .release-git-commit)"
+                RELEASE_IMAGE_TAG="$(cat .release-image-tag)"
+                export RELEASE_GIT_COMMIT RELEASE_IMAGE_TAG
+                auth="$(printf '%s:%s' "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" | base64 | tr -d '\n')"
+                printf '{"auths":{"%s":{"auth":"%s"}}}\n' \
+                  "$(printf '%s' "${IMAGE_REPOSITORY}" | cut -d/ -f1)" "${auth}" \
+                  > "${DOCKER_CONFIG}/config.json"
+                unset auth REGISTRY_USERNAME REGISTRY_PASSWORD
+                trap 'rm -f "${DOCKER_CONFIG}/config.json"' EXIT
 
-              buildctl-daemonless.sh build \
-                --frontend dockerfile.v0 \
-                --local context="${WORKSPACE}/product-source" \
-                --local dockerfile="${WORKSPACE}/product-source" \
-                --opt filename=Dockerfile \
-                --opt "build-arg:APP_VERSION=${VERSION}" \
-                --opt "build-arg:VCS_REF=${RELEASE_GIT_COMMIT}" \
-                --opt "build-arg:IMAGE_TAG=${RELEASE_IMAGE_TAG}" \
-                --opt "build-arg:HTTP_PROXY=${HTTP_PROXY:-}" \
-                --opt "build-arg:HTTPS_PROXY=${HTTPS_PROXY:-}" \
-                --opt "build-arg:NO_PROXY=${NO_PROXY:-}" \
-                --metadata-file .product-image.json \
-                --output "type=image,name=${IMAGE_REPOSITORY}:${RELEASE_IMAGE_TAG},push=true"
+                buildctl-daemonless.sh build \
+                  --frontend dockerfile.v0 \
+                  --local context="${WORKSPACE}/product-source" \
+                  --local dockerfile="${WORKSPACE}/product-source" \
+                  --opt filename=Dockerfile \
+                  --opt "build-arg:APP_VERSION=${VERSION}" \
+                  --opt "build-arg:VCS_REF=${RELEASE_GIT_COMMIT}" \
+                  --opt "build-arg:IMAGE_TAG=${RELEASE_IMAGE_TAG}" \
+                  --opt "build-arg:HTTP_PROXY=${HTTP_PROXY:-}" \
+                  --opt "build-arg:HTTPS_PROXY=${HTTPS_PROXY:-}" \
+                  --opt "build-arg:NO_PROXY=${NO_PROXY:-}" \
+                  --metadata-file .product-image.json \
+                  --output "type=image,name=${IMAGE_REPOSITORY}:${RELEASE_IMAGE_TAG},push=true"
 
-              sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
-                .product-image.json > .product-image-digest
-              grep -Eq '^sha256:[a-f0-9]{64}$' .product-image-digest
-            '''
+                sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' \
+                  .product-image.json > .product-image-digest
+                grep -Eq '^sha256:[a-f0-9]{64}$' .product-image-digest
+              '''
+            }
           }
         }
         script {
