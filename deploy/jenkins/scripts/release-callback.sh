@@ -20,6 +20,21 @@ esac
 : "${BUILD_URL:?}"
 : "${JENKINS_CALLBACK_SECRET:?}"
 
+read_metadata() {
+  current="$1"
+  path="$2"
+  if [ -n "${current}" ] || [ ! -f "${path}" ]; then
+    printf '%s' "${current}"
+    return
+  fi
+  tr -d '\r\n' < "${path}"
+}
+
+RELEASE_GIT_COMMIT="$(read_metadata "${RELEASE_GIT_COMMIT:-}" .release-git-commit)"
+RELEASE_IMAGE_TAG="$(read_metadata "${RELEASE_IMAGE_TAG:-}" .release-image-tag)"
+RELEASE_IMAGE_DIGEST="$(read_metadata "${RELEASE_IMAGE_DIGEST:-}" .product-image-digest)"
+RELEASE_HELM_REVISION="$(read_metadata "${RELEASE_HELM_REVISION:-}" .helm-revision)"
+
 case "${CALLBACK_BASE_URL}" in
   http://*.svc.cluster.local:*|https://*) ;;
   *) exit 2 ;;
@@ -78,3 +93,4 @@ curl --silent --show-error --fail \
   -H "X-Jenkins-Signature: sha256=${signature}" \
   --data-binary "@${body_file}" \
   "${CALLBACK_BASE_URL}${callback_path}" >/dev/null
+
