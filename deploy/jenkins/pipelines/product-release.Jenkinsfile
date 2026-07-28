@@ -44,6 +44,7 @@ pipeline {
           set -eu
           test -f deploy/helm/product-service/Chart.yaml
           test -f deploy/jenkins/scripts/release-callback.sh
+          sed -i 's/\r$//' deploy/jenkins/scripts/release-callback.sh
         '''
       }
     }
