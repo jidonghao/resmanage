@@ -1,0 +1,76 @@
+serviceKey: api
+replicaCount: 2
+
+image:
+  repository: registry.example.invalid/apps/app-1/api
+  tag: fixture-000000000001
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  pullPolicy: IfNotPresent
+
+containerPort: 8080
+service:
+  port: 80
+
+deployment:
+  minReadySeconds: 10
+  progressDeadlineSeconds: 300
+  revisionHistoryLimit: 5
+  strategy:
+    maxUnavailable: 0
+    maxSurge: 1
+
+terminationGracePeriodSeconds: 30
+lifecycle:
+  preStopSleepSeconds: 5
+
+probes:
+  startup:
+    path: /health/startup
+    periodSeconds: 2
+    timeoutSeconds: 1
+    failureThreshold: 30
+  readiness:
+    path: /health/ready
+    periodSeconds: 5
+    timeoutSeconds: 1
+    failureThreshold: 3
+  liveness:
+    path: /health/live
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+pdb:
+  minAvailable: 1
+
+topologySpread:
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+env: []
+envFrom: []
+writableVolumes:
+  - name: tmp
+    mountPath: /tmp
