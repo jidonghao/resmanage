@@ -195,9 +195,15 @@ pipeline {
         expression { params.RELEASE_KIND == 'ROLLBACK' }
       }
       steps {
+        script {
+          beginReleaseStep('PREPARE')
+        }
         writeFile(file: '.release-git-commit', text: "${params.GIT_COMMIT_SHA}\n")
         writeFile(file: '.release-image-tag', text: "${params.IMAGE_TAG}\n")
         writeFile(file: '.product-image-digest', text: "${params.IMAGE_DIGEST}\n")
+        script {
+          sendReleaseCallback('PREPARE', 'SUCCEEDED')
+        }
       }
     }
 
