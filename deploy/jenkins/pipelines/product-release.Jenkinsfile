@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.4 seconds
-Output:
 def sendReleaseCallback(String stepKey, String status) {
   withCredentials([string(
     credentialsId: 'product-release-callback-hmac',
